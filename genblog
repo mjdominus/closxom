@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Generate static blog from article files using the suxsom plugin system."""
+
+import argparse
+import sys
+from pathlib import Path
+
+from suxsom.db import DB
+from suxsom.orchestrator import PluginOrchestrator
+
+# Import all plugins
+from suxsom.plugins.scanfiles import ScanFilesPlugin
+from suxsom.plugins.readfiles import ReadFilesPlugin
+from suxsom.plugins.notyet import NotYetPlugin
+from suxsom.plugins.process_meta import ProcessMetaPlugin
+from suxsom.plugins.compute_dates import ComputeDatesPlugin
+from suxsom.plugins.build_article_pages import BuildArticlePagesPlugin
+from suxsom.plugins.build_date_archives import BuildDateArchivesPlugin
+from suxsom.plugins.build_topic_archives import BuildTopicArchivesPlugin
+from suxsom.plugins.build_main_page import BuildMainPagePlugin
+from suxsom.plugins.write_html import WriteHtmlPlugin
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate static blog")
+    parser.add_argument('--db', default='suxsom.db',
+                        help='Database file (default: suxsom.db)')
+    parser.add_argument('--input', default='articles',
+                        help='Input directory (default: articles)')
+    parser.add_argument('--output', default='output',
+                        help='Output directory (default: output)')
+    parser.add_argument('--schema', default='SCHEMA',
+                        help='Schema directory (default: SCHEMA)')
+    parser.add_argument('--create-db', action='store_true',
+                        help='Create fresh database (destroys existing)')
+    parser.add_argument('--verbose', '-v', action='store_true',
+                        help='Verbose output')
+    parser.add_argument('--recent', type=int, default=12,
+                        help='Number of recent articles on main page (default: 12)')
+
+    args = parser.parse_args()
+
+    # Create or open database
+    db_path = Path(args.db)
+    if args.create_db or not db_path.exists():
+        if db_path.exists():
+            db_path.unlink()
+            if args.verbose:
+                print(f"Removed existing database: {db_path}", file=sys.stderr)
+
+        db = DB(args.db)
+        db.create_tables(Path(args.schema))
+        if args.verbose:
+            print(f"Created database: {db_path}", file=sys.stderr)
+    else:
+        db = DB(args.db)
+        if args.verbose:
+            print(f"Using existing database: {db_path}", file=sys.stderr)
+
+    # Create orchestrator and register plugins
+    orchestrator = PluginOrchestrator(db)
+
+    # File handling plugins
+    orchestrator.register(ScanFilesPlugin)
+    orchestrator.register(ReadFilesPlugin)
+    orchestrator.register(NotYetPlugin)
+
+    # Article processing plugins
+    orchestrator.register(ProcessMetaPlugin)
+    orchestrator.register(ComputeDatesPlugin)
+
+    # Page building plugins
+    orchestrator.register(BuildArticlePagesPlugin)
+    orchestrator.register(BuildDateArchivesPlugin)
+    orchestrator.register(BuildTopicArchivesPlugin)
+    orchestrator.register(BuildMainPagePlugin)
+
+    # Output plugins
+    orchestrator.register(WriteHtmlPlugin)
+
+    # Run the orchestrator
+    try:
+        if args.verbose:
+            print("\n=== Starting blog generation ===\n", file=sys.stderr)
+
+        orchestrator.run(verbose=args.verbose)
+
+        if args.verbose:
+            print(f"\n=== Blog generation complete ===", file=sys.stderr)
+            print(f"Output written to: {args.output}", file=sys.stderr)
+
+        return 0
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
