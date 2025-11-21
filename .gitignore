@@ -2,3 +2,7 @@ suxsom.db
 *.pyc
 /__pycache__/
 /Makefile
+
+# Test data and generated output
+/articles/
+/output/
