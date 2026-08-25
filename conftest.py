@@ -1,5 +1,5 @@
 
-from suxsom.db import DB
+from cloxsom.db import DB
 import pytest
 import sys
 

@@ -1,4 +1,4 @@
-"""Central logging configuration for suxsom.
+"""Central logging configuration for cloxsom.
 
 Call configure() once at process startup (genblog, run-plugin, etc.).
 Plugins get their logger automatically via Plugin.__init__ and need
@@ -9,12 +9,12 @@ import logging
 
 
 def configure(level=logging.WARNING):
-    """Attach a stderr handler to the suxsom logger tree.
+    """Attach a stderr handler to the cloxsom logger tree.
 
-    All plugin loggers are named "suxsom.plugin.<name>" and propagate
-    up to "suxsom", so this is the only place output is configured.
+    All plugin loggers are named "cloxsom.plugin.<name>" and propagate
+    up to "cloxsom", so this is the only place output is configured.
     """
-    logger = logging.getLogger("suxsom")
+    logger = logging.getLogger("cloxsom")
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(name)s %(levelname)s: %(message)s"))
     logger.addHandler(handler)

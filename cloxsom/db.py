@@ -4,10 +4,10 @@ import sqlite3
 import sys
 import json
 
-import suxsom.skrap
+import cloxsom.skrap
 
 class DB():
-    """Database abstraction layer for suxsom.
+    """Database abstraction layer for cloxsom.
 
     Provides high-level methods for managing products (skrap objects),
     plugins, and metadata.
@@ -21,7 +21,7 @@ class DB():
         self.conn.row_factory = sqlite3.Row  # Enable dict-like access
 
     def default_path(self):
-        return "suxsom.db"
+        return "cloxsom.db"
 
     def create_tables(self, d=None):
         if d is None:
@@ -118,7 +118,7 @@ class DB():
         owner_name = plugin_row['name'] if plugin_row else "unknown"
 
         # Create the appropriate Skrap subclass based on type
-        skrap_class = suxsom.skrap.get_skrap_class(row['type'])
+        skrap_class = cloxsom.skrap.get_skrap_class(row['type'])
         skrap_obj = skrap_class(
             name=row['name'],
             owner=owner_name,
@@ -151,7 +151,7 @@ class DB():
 
         Returns the created skrap object with its database ID populated.
         """
-        skrap_class = suxsom.skrap.get_skrap_class(type_name)
+        skrap_class = cloxsom.skrap.get_skrap_class(type_name)
         skrap_obj = skrap_class(name=name, owner=owner_name, meta=meta)
         self.save_skrap(skrap_obj)
         return skrap_obj

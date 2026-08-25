@@ -1,7 +1,7 @@
 """Plugin to filter out unpublished articles."""
 
 from pathlib import Path
-from suxsom.plugin.plugin import Plugin
+from cloxsom.plugin.plugin import Plugin
 
 
 class NotYetPlugin(Plugin):

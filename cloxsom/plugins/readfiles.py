@@ -1,8 +1,8 @@
 """Plugin to read file contents and create ArticleSkrap products."""
 
 from pathlib import Path
-from suxsom.plugin.plugin import Plugin
-from suxsom.skrap import ArticleSkrap
+from cloxsom.plugin.plugin import Plugin
+from cloxsom.skrap import ArticleSkrap
 
 
 class ReadFilesPlugin(Plugin):

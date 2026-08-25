@@ -4,8 +4,7 @@ Closxom (née suxsom) is a custom static blog generator written in Python, desig
 to replace a long-running Blosxom installation.  The codebase is currently in the
 `claude` branch; `master` has only the schema and early stubs.
 
-The package is still named `suxsom` throughout the code; renaming to `cloxsom`
-is a planned but not-yet-done task.
+The package is named `cloxsom` throughout the code, matching the project name.
 
 ## Core idea
 
@@ -40,23 +39,23 @@ filesystem
 | `SCHEMA/meta.sql` | `meta` table: key/value metadata attached to a skrap |
 | `SCHEMA/plugin.sql` | `plugin` table: maps plugin name → integer id |
 | `SCHEMA/plugin_meta.sql` | `plugin_meta` table: per-plugin key/value store |
-| `suxsom/skrap.py` | `Skrap` base class + concrete types (`FileSkrap`, `ArticleSkrap`, `PageSkrap`, `TestSkrap`).  Includes a type registry (`register_skrap_type` / `get_skrap_class`). |
-| `suxsom/db.py` | `DB` class — SQLite wrapper.  CRUD for skrap objects and metadata, plugin registration. Metadata values are JSON-serialised for complex types. |
-| `suxsom/orchestrator.py` | `PluginOrchestrator` — builds dependency graph from plugin `inputs()`/`outputs()` declarations, topological-sorts, then calls `plugin.run()` in order. |
-| `suxsom/plugin/plugin.py` | `Plugin` abstract base class.  Subclasses implement `name()`, `inputs()`, `outputs()`, `run()`. |
-| `suxsom/plugins/scanfiles.py` | Walks `articles/` directory, creates one `FileSkrap` per file. |
-| `suxsom/plugins/readfiles.py` | Reads each `FileSkrap` file from disk, creates an `ArticleSkrap` with `original_content`. |
-| `suxsom/plugins/notyet.py` | Marks articles unpublished if a matching `.notyet` file exists. |
-| `suxsom/plugins/process_meta.py` | Strips and parses the `META` header block (Blosxom format).  Sets `title`, `tags`, etc. on the `ArticleSkrap`. |
-| `suxsom/plugins/compute_dates.py` | Determines publication date from META field, path (`/YYYY/MM/DD/`), or file mtime. |
-| `suxsom/plugins/build_article_pages.py` | Creates one `PageSkrap` per published article (`page_type=single`). |
-| `suxsom/plugins/build_date_archives.py` | Creates year and month archive `PageSkrap` objects. |
-| `suxsom/plugins/build_topic_archives.py` | Creates one `PageSkrap` per tag/topic. |
-| `suxsom/plugins/build_main_page.py` | Creates the main-index `PageSkrap` with the N most recent articles. |
-| `suxsom/plugins/write_html.py` | Reads all `PageSkrap` objects and writes HTML files to `output/`.  Templates are currently inline strings — they will become Jinja2 files |
-| `suxsom/meta.py` | Thin `Meta(dict)` subclass — not much here yet. |
-| `suxsom/article.py` | Old draft `Article` class — buggy, predates the current skrap approach; not currently used. |
-| `suxsom/context.py` | Intentionally stubbed `Context` class — abandoned in favour of direct DB queries. |
+| `cloxsom/skrap.py` | `Skrap` base class + concrete types (`FileSkrap`, `ArticleSkrap`, `PageSkrap`, `TestSkrap`).  Includes a type registry (`register_skrap_type` / `get_skrap_class`). |
+| `cloxsom/db.py` | `DB` class — SQLite wrapper.  CRUD for skrap objects and metadata, plugin registration. Metadata values are JSON-serialised for complex types. |
+| `cloxsom/orchestrator.py` | `PluginOrchestrator` — builds dependency graph from plugin `inputs()`/`outputs()` declarations, topological-sorts, then calls `plugin.run()` in order. |
+| `cloxsom/plugin/plugin.py` | `Plugin` abstract base class.  Subclasses implement `name()`, `inputs()`, `outputs()`, `run()`. |
+| `cloxsom/plugins/scanfiles.py` | Walks `articles/` directory, creates one `FileSkrap` per file. |
+| `cloxsom/plugins/readfiles.py` | Reads each `FileSkrap` file from disk, creates an `ArticleSkrap` with `original_content`. |
+| `cloxsom/plugins/notyet.py` | Marks articles unpublished if a matching `.notyet` file exists. |
+| `cloxsom/plugins/process_meta.py` | Strips and parses the `META` header block (Blosxom format).  Sets `title`, `tags`, etc. on the `ArticleSkrap`. |
+| `cloxsom/plugins/compute_dates.py` | Determines publication date from META field, path (`/YYYY/MM/DD/`), or file mtime. |
+| `cloxsom/plugins/build_article_pages.py` | Creates one `PageSkrap` per published article (`page_type=single`). |
+| `cloxsom/plugins/build_date_archives.py` | Creates year and month archive `PageSkrap` objects. |
+| `cloxsom/plugins/build_topic_archives.py` | Creates one `PageSkrap` per tag/topic. |
+| `cloxsom/plugins/build_main_page.py` | Creates the main-index `PageSkrap` with the N most recent articles. |
+| `cloxsom/plugins/write_html.py` | Reads all `PageSkrap` objects and writes HTML files to `output/`.  Templates are currently inline strings — they will become Jinja2 files |
+| `cloxsom/meta.py` | Thin `Meta(dict)` subclass — not much here yet. |
+| `cloxsom/article.py` | Old draft `Article` class — buggy, predates the current skrap approach; not currently used. |
+| `cloxsom/context.py` | Intentionally stubbed `Context` class — abandoned in favour of direct DB queries. |
 | `notes/PLAN` | Design notes from 2022–2023.  Good background reading. |
 | `notes/old/` | Earlier design notes (FLOW, PLUGINS, PLUGINS\_NEEDED). |
 
@@ -81,7 +80,7 @@ filesystem
 7. **Full regeneration only** — every run recreates all skrap objects from scratch;
    no incremental update.
 
-## Planned rename
+## Rename
 
-The package will be renamed from `suxsom` → `cloxsom` (matching the project name
-Closxom).  Not done yet; waiting until the code is more stable.
+The package was renamed from `suxsom` → `cloxsom` (matching the project name
+Closxom).

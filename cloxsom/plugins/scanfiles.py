@@ -1,8 +1,8 @@
 """Plugin to scan filesystem for article files."""
 
 from pathlib import Path
-from suxsom.plugin.plugin import Plugin
-from suxsom.skrap import FileSkrap
+from cloxsom.plugin.plugin import Plugin
+from cloxsom.skrap import FileSkrap
 
 
 class ScanFilesPlugin(Plugin):

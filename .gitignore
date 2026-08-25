@@ -1,4 +1,4 @@
-suxsom.db
+cloxsom.db
 *.pyc
 /__pycache__/
 /Makefile

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import suxsom.db
-import suxsom.sux
+import cloxsom.db
+import cloxsom.sux
 
-db = suxsom.db.db()
+db = cloxsom.db.db()
 db.create_tables()
 
-o = suxsom.sux.sux("testobject", "tester")
+o = cloxsom.sux.sux("testobject", "tester")
 id = db.save_sux(o)
 print(id)

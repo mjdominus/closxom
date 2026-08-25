@@ -6,13 +6,12 @@
   bypassing the full `genblog` pipeline/orchestrator. Signature: `run-plugin plugin-name args...`
   — args accepted but ignored for now; will be passed to `run()` once plugins take arguments.
   Prerequisite (done): per-plugin logging via `self.log` in the `Plugin` base class, configured
-  centrally in `suxsom/logconfig.py`.
+  centrally in `cloxsom/logconfig.py`.
 - Test suite: planned, shape not yet decided.
 
 ## Architecture
 
 - Design and document improved plugin API
-- Rename package `suxsom` → `cloxsom` (matching project name); deferred until code is more stable
 - New plugin protocol to replace unconditional full-regen `run()`: each plugin implements
   `default_target_list()`, `dependencies_of(target)`, `build(target)`, with generic
   `run(targets=None)` / `need_to_rebuild(target, deps)` on the base `Plugin` class —
@@ -26,6 +25,8 @@
   so dependency FKs never dangle and removal of an input propagates as staleness;
   still open how plugins detect an empty dependency set and how `write_html` removes
   files for tombstoned pages
+- Skrap metadata values should carry a type, defaulting to `string` but also supporting
+  things like `pathlib.Path` or `int` — similar in spirit to argparse's `type=` parameter
 
 ## Unimplemented features
 
@@ -41,7 +42,7 @@
 
 - `--input` / `--output` / `--recent` are parsed by `genblog` but never passed to
   plugins — plugins use hardcoded defaults (`articles/`, `output/`, 12)
-- `suxsom/article.py` is dead code from the pre-draft era — buggy, unused; delete
+- `cloxsom/article.py` is dead code from the pre-draft era — buggy, unused; delete
   or rewrite as a plugin
 - `build_topic_archives` can double-count articles with overlapping tag fields
   (`tags`, `topic`, `category`)

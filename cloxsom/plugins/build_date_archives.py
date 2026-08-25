@@ -2,8 +2,8 @@
 
 from datetime import datetime
 from collections import defaultdict
-from suxsom.plugin.plugin import Plugin
-from suxsom.skrap import PageSkrap
+from cloxsom.plugin.plugin import Plugin
+from cloxsom.skrap import PageSkrap
 
 
 class BuildDateArchivesPlugin(Plugin):

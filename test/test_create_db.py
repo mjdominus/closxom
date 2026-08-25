@@ -1,4 +1,4 @@
-from suxsom.db import DB
+from cloxsom.db import DB
 import sys
 
 def test_create_db(tmpdir):

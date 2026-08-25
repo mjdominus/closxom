@@ -3,7 +3,7 @@
 import re
 from datetime import datetime
 from pathlib import Path
-from suxsom.plugin.plugin import Plugin
+from cloxsom.plugin.plugin import Plugin
 
 
 class ComputeDatesPlugin(Plugin):

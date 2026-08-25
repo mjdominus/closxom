@@ -1,6 +1,6 @@
-from suxsom.plugin.plugin import TestPlugin
-from suxsom.plugin.trivial import TrivialPlugin
-from suxsom.context import Context
+from cloxsom.plugin.plugin import TestPlugin
+from cloxsom.plugin.trivial import TrivialPlugin
+from cloxsom.context import Context
 import sys
 
 def test_run_plugin():

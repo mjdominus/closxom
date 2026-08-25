@@ -1,7 +1,7 @@
 """Plugin to parse META sections from articles."""
 
 import re
-from suxsom.plugin.plugin import Plugin
+from cloxsom.plugin.plugin import Plugin
 
 
 class ProcessMetaPlugin(Plugin):

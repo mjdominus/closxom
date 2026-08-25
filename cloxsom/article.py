@@ -3,7 +3,7 @@
 
 import re
 
-import suxsom
+import cloxsom
 
 class Article(skrap):
     """Functions for dealing with converting disk files to articles,
@@ -28,14 +28,14 @@ class Article(skrap):
             if line1 == "META\n":
                 meta = cls.load_metainfo(fh)
             else:
-                meta = suxsom.meta.Meta({ "title": line1 })
+                meta = cloxsom.meta.Meta({ "title": line1 })
 
             return cls.from_string(fh.read(), shortpath, meta, cls.figure_out_last_modified(path, prefix))
 
     @classmethod
     def from_string(cls, s, name, meta=None, last_modified=None, **kwargs):
         if meta is None:
-            meta = suxsom.meta.Meta()
+            meta = cloxsom.meta.Meta()
         meta["content"] = s
 
         return Article(name=name,
@@ -54,4 +54,4 @@ class Article(skrap):
             key, value = match.groups()
             meta[key.lower()] = value
 
-        return suxsom.meta.Meta(meta)
+        return cloxsom.meta.Meta(meta)

@@ -1,7 +1,7 @@
 """Plugin to build the main index page."""
 
-from suxsom.plugin.plugin import Plugin
-from suxsom.skrap import PageSkrap
+from cloxsom.plugin.plugin import Plugin
+from cloxsom.skrap import PageSkrap
 
 
 class BuildMainPagePlugin(Plugin):
