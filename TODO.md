@@ -48,4 +48,4 @@
 - `readfiles` and `process_meta` unconditionally resave every object on every run
   (unlike `compute_dates`, which correctly checks before saving) — blocks the
   incremental-rebuild work above, since one holdout plugin touching
-  `last_modified` reopens false-staleness cascades for everything downstream
+  `last_updated` reopens false-staleness cascades for everything downstream

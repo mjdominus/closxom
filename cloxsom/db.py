@@ -122,7 +122,7 @@ class DB():
         skrap_obj = skrap_class(
             name=row['name'],
             owner=owner_name,
-            last_modified=row['last_modified'],
+            last_updated=row['last_updated'],
             id=row['id']
         )
 
@@ -159,7 +159,7 @@ class DB():
     def save_skrap(self, o):
         """Save or update a skrap object in the database."""
         import time
-        o.set_last_modified()
+        o.set_last_updated()
 
         # Ensure owner plugin is registered
         owner_id = self.ensure_plugin_registered(o.owner)
@@ -167,9 +167,9 @@ class DB():
         if o.id is None:
             # Insert new skrap
             self.conn.execute("""
-                INSERT INTO skrap(name, type, owner_id, last_modified)
+                INSERT INTO skrap(name, type, owner_id, last_updated)
                 VALUES (?, ?, ?, ?)
-            """, (o.name, o.type, owner_id, o.last_modified))
+            """, (o.name, o.type, owner_id, o.last_updated))
             c = self.conn.cursor()
             c.execute("""
                 SELECT id FROM skrap
@@ -179,9 +179,9 @@ class DB():
         else:
             # Update existing skrap
             self.conn.execute("""
-                UPDATE skrap SET name = ?, type = ?, owner_id = ?, last_modified = ?
+                UPDATE skrap SET name = ?, type = ?, owner_id = ?, last_updated = ?
                 WHERE id = ?
-            """, (o.name, o.type, owner_id, o.last_modified, o.id))
+            """, (o.name, o.type, owner_id, o.last_updated, o.id))
 
         self.save_skrap_metadata(o)
         self.conn.commit()

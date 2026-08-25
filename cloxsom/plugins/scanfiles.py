@@ -58,7 +58,7 @@ class ScanFilesPlugin(Plugin):
                 meta={
                     'path': str(path.absolute()),
                     'relpath': str(relpath),
-                    'mtime': path.stat().st_mtime
+                    'file_mtime': path.stat().st_mtime
                 }
             )
 

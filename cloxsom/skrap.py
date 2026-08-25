@@ -28,7 +28,7 @@ class Skrap():
         name: Unique name for this product (within owner)
         owner: Name of the plugin that created this product
         meta: Dictionary of metadata
-        last_modified: Unix timestamp of last modification
+        last_updated: Unix timestamp this record was last written
     """
 
     @classmethod
@@ -39,21 +39,21 @@ class Skrap():
         """
         raise NotImplementedError(f"Skrap subclass {cls} must implement typ()")
 
-    def __init__(self, name, owner, meta=None, last_modified=None, id=None):
+    def __init__(self, name, owner, meta=None, last_updated=None, id=None):
         """Create new skrap object (not yet persistent).
 
         Args:
             name: Unique name for this product
             owner: Name of the plugin that owns this product
             meta: Optional metadata dictionary
-            last_modified: Optional timestamp (defaults to current time)
+            last_updated: Optional timestamp (defaults to current time)
             id: Optional database ID (for loaded objects)
         """
         self.id = id
         self.type = self.typ()
         self.name = name
         self.owner = owner
-        self.set_last_modified(last_modified)
+        self.set_last_updated(last_updated)
         if meta is None:
             meta = {}
         self.meta = meta
@@ -62,16 +62,16 @@ class Skrap():
         """Save this skrap to the database."""
         return db.save_skrap(self)
 
-    def set_last_modified(self, last_modified=None):
-        """Set the last_modified timestamp.
+    def set_last_updated(self, last_updated=None):
+        """Set the last_updated timestamp (when this record was last written).
 
         Args:
-            last_modified: Unix timestamp, or None to use current time
+            last_updated: Unix timestamp, or None to use current time
         """
-        if last_modified is None:
-            self.last_modified = time.time()
+        if last_updated is None:
+            self.last_updated = time.time()
         else:
-            self.last_modified = last_modified
+            self.last_updated = last_updated
 
     def __str__(self):
         return f"<skrap #{self.id} ({self.type}) '{self.name}' from '{self.owner}'>"

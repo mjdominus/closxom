@@ -49,7 +49,7 @@ class ComputeDatesPlugin(Plugin):
 
             # Fall back to file mtime
             if date_timestamp is None:
-                date_timestamp = article.meta.get('mtime')
+                date_timestamp = article.meta.get('file_mtime')
 
             if date_timestamp is not None:
                 article.meta['date'] = date_timestamp
