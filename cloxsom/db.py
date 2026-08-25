@@ -1,10 +1,13 @@
 
 from pathlib import Path
+import logging
 import sqlite3
 import sys
 import json
 
 import cloxsom.skrap
+
+logger = logging.getLogger("cloxsom.db")
 
 class DB():
     """Database abstraction layer for cloxsom.
@@ -109,6 +112,10 @@ class DB():
         c.execute("SELECT * FROM skrap")
         return [self._skrap_from_row(row) for row in c.fetchall()]
 
+    def find_all_published_articles(self):
+        """Find all published article skrap objects."""
+        return [art for art in self.find_all_skrap_by_type('article') if art.is_published()]
+
     def _skrap_from_row(self, row):
         """Construct a Skrap object from a database row."""
         # Get the plugin name from the owner_id
@@ -185,6 +192,9 @@ class DB():
 
         self.save_skrap_metadata(o)
         self.conn.commit()
+
+        logger.info("Saved skrap %s (%r) owned by plugin %r",
+                    o.id, o.name, o.owner)
 
         return o.id
 
