@@ -1,4 +1,4 @@
-
+import logging
 
 # abstract class for plugins
 
@@ -34,6 +34,7 @@ class Plugin():
     def __init__(self, db):
         """Initialize plugin with database handle."""
         self.db = db
+        self.log = logging.getLogger(f"suxsom.plugin.{self.name()}")
 
     def run(self):
         """Execute the plugin's main logic.
