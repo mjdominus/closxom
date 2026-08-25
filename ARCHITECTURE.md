@@ -53,7 +53,7 @@ filesystem
 | `suxsom/plugins/build_date_archives.py` | Creates year and month archive `PageSkrap` objects. |
 | `suxsom/plugins/build_topic_archives.py` | Creates one `PageSkrap` per tag/topic. |
 | `suxsom/plugins/build_main_page.py` | Creates the main-index `PageSkrap` with the N most recent articles. |
-| `suxsom/plugins/write_html.py` | Reads all `PageSkrap` objects and writes HTML files to `output/`.  Templates are currently inline strings — no external template engine. |
+| `suxsom/plugins/write_html.py` | Reads all `PageSkrap` objects and writes HTML files to `output/`.  Templates are currently inline strings — they will become Jinja2 files |
 | `suxsom/meta.py` | Thin `Meta(dict)` subclass — not much here yet. |
 | `suxsom/article.py` | Old draft `Article` class — buggy, predates the current skrap approach; not currently used. |
 | `suxsom/context.py` | Intentionally stubbed `Context` class — abandoned in favour of direct DB queries. |
@@ -71,8 +71,7 @@ filesystem
 
 3. **No feed generation** — no RSS or Atom plugin yet.
 
-4. **HTML templates are hardcoded strings** in `write_html.py` — no templating
-   engine, no way to customise the look without editing Python.
+4. **HTML templates are hardcoded strings** in `write_html.py` — later they will be Jinja2 template files
 
 5. **No asset handling** — images, CSS, JS in the articles directory are ignored.
 

@@ -1,9 +1,0 @@
-
-Items I will need if I want to replace blosxom:
-
-o Load article and its metadata into database as a sux
-
-o Select articles matching some criterion, create a sux representing
-  the article sequence (probably need a new kind of suxgroup table or
-  something)
-o Generate an HTML file corresponding to a suxgroup
