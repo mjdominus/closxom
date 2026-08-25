@@ -25,16 +25,12 @@ class BuildTopicArchivesPlugin(Plugin):
 
     def run(self):
         """Create topic archive pages."""
-        articles = self.db.find_all_skrap_by_type("article")
+        articles = self.db.find_all_published_articles()
 
         # Group articles by topic/tag
         topic_archives = defaultdict(list)
 
         for article in articles:
-            # Only include published articles
-            if not article.meta.get('published', True):
-                continue
-
             # Get tags from metadata
             tags = article.meta.get('tags', [])
 

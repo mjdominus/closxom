@@ -82,6 +82,7 @@ class ProcessMetaPlugin(Plugin):
                 meta_dict[key.lower()] = value.strip()
             else:
                 # Malformed META line, treat as end of META
+                # TODO : diagnose error
                 break
 
             i += 1

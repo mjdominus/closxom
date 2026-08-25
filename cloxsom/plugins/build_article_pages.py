@@ -25,14 +25,10 @@ class BuildArticlePagesPlugin(Plugin):
 
     def run(self):
         """Create a page for each published article."""
-        articles = self.db.find_all_skrap_by_type("article")
+        articles = self.db.find_all_published_articles()
 
         pages_created = 0
         for article in articles:
-            # Only create pages for published articles
-            if not article.meta.get('published', True):
-                continue
-
             # Determine output path from article relpath
             # e.g., "tech/foo.txt" -> "tech/foo.html"
             relpath = article.meta.get('relpath', '')

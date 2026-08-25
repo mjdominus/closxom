@@ -32,13 +32,11 @@ class BuildMainPagePlugin(Plugin):
 
     def run(self):
         """Create the main index page."""
-        articles = self.db.find_all_skrap_by_type("article")
+        articles = self.db.find_all_published_articles()
 
         # Get published articles with dates
         published_articles = []
         for article in articles:
-            if not article.meta.get('published', True):
-                continue
             if 'date' in article.meta:
                 published_articles.append((article.meta['date'], article.id))
 

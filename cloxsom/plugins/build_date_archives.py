@@ -26,17 +26,13 @@ class BuildDateArchivesPlugin(Plugin):
 
     def run(self):
         """Create date archive pages."""
-        articles = self.db.find_all_skrap_by_type("article")
+        articles = self.db.find_all_published_articles()
 
         # Group articles by year and month
         year_archives = defaultdict(list)
         month_archives = defaultdict(list)
 
         for article in articles:
-            # Only include published articles
-            if not article.meta.get('published', True):
-                continue
-
             date = article.meta.get('date')
             if date is None:
                 continue

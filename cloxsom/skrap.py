@@ -111,6 +111,9 @@ class ArticleSkrap(Skrap):
     def typ(cls):
         return "article"
 
+    def is_published(self):
+        return self.meta['published']
+
 
 @register_skrap_type
 class PageSkrap(Skrap):

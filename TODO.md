@@ -26,8 +26,20 @@
   files for tombstoned pages
 - Skrap metadata values should carry a type, defaulting to `string` but also supporting
   things like `pathlib.Path` or `int` — similar in spirit to argparse's `type=` parameter
+- Once metadata typing (above) exists, redo path-manipulation code that currently treats
+  paths as plain strings to use `pathlib.Path` methods instead. E.g.
+  `build_article_pages.py:41` does `relpath.rsplit('.', 1)[0] + '.html'`; once `relpath` is
+  a typed `Path`, this should be `relpath.with_suffix('.html')`
 - `run-plugin` should discover available plugins at run time instead of importing a
   hardcoded list (`PLUGINS` dict in `run-plugin` currently lists each plugin class by hand)
+- `ArticleSkrap.is_published()` does `self.meta['published']`, which raises a raw `KeyError`
+  if an article skrap is missing the `published` key (this is intentional — every
+  `ArticleSkrap` should have one). At some point add a proper handler for this case (and
+  presumably other required-but-missing metadata keys) instead of letting the bare
+  `KeyError` propagate
+- Need to handle articles that have an explicit publication date in their META section.
+  Not yet clear how responsibility for this should be divided between `process_meta`
+  (which parses META) and `notyet` (which currently decides published/unpublished status)
 
 ## Unimplemented features
 
