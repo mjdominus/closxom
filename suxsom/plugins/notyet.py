@@ -7,7 +7,7 @@ from suxsom.plugin.plugin import Plugin
 class NotYetPlugin(Plugin):
     """Marks articles as unpublished if they have a .notyet file.
 
-    Modifies existing ArticleSux products in place, setting their
+    Modifies existing ArticleSkrap products in place, setting their
     'published' metadata to False if a corresponding .notyet file exists.
     """
 
@@ -25,7 +25,7 @@ class NotYetPlugin(Plugin):
 
     def run(self):
         """Check for .notyet files and mark articles as unpublished."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         marked_unpublished = 0
         for article in articles:
@@ -35,11 +35,11 @@ class NotYetPlugin(Plugin):
 
             if notyet_path.exists():
                 article.meta['published'] = False
-                self.db.save_sux(article)
+                self.db.save_skrap(article)
                 marked_unpublished += 1
             elif 'published' not in article.meta:
                 # Default to published if not specified
                 article.meta['published'] = True
-                self.db.save_sux(article)
+                self.db.save_skrap(article)
 
         return marked_unpublished

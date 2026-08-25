@@ -2,14 +2,14 @@
 
 from pathlib import Path
 from suxsom.plugin.plugin import Plugin
-from suxsom.sux import FileSux
+from suxsom.skrap import FileSkrap
 
 
 class ScanFilesPlugin(Plugin):
-    """Scans the filesystem for article files and creates FileSux products.
+    """Scans the filesystem for article files and creates FileSkrap products.
 
     This plugin reads from the filesystem (not the database) and produces
-    FileSux products for each file found.
+    FileSkrap products for each file found.
     """
 
     @classmethod
@@ -51,10 +51,10 @@ class ScanFilesPlugin(Plugin):
             if path.name.endswith('.notyet'):
                 continue
 
-            # Create a FileSux for this file
+            # Create a FileSkrap for this file
             relpath = path.relative_to(self.input_dir)
 
-            file_sux = FileSux(
+            file_skrap = FileSkrap(
                 name=str(relpath),
                 owner=self.name(),
                 meta={
@@ -64,7 +64,7 @@ class ScanFilesPlugin(Plugin):
                 }
             )
 
-            self.db.save_sux(file_sux)
+            self.db.save_skrap(file_skrap)
             files_found += 1
 
         return files_found

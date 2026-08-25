@@ -28,7 +28,7 @@ class ComputeDatesPlugin(Plugin):
 
     def run(self):
         """Compute publication dates for all articles."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         computed = 0
         for article in articles:
@@ -53,7 +53,7 @@ class ComputeDatesPlugin(Plugin):
 
             if date_timestamp is not None:
                 article.meta['date'] = date_timestamp
-                self.db.save_sux(article)
+                self.db.save_skrap(article)
                 computed += 1
 
         return computed

@@ -1,7 +1,7 @@
 """Plugin to build the main index page."""
 
 from suxsom.plugin.plugin import Plugin
-from suxsom.sux import PageSux
+from suxsom.skrap import PageSkrap
 
 
 class BuildMainPagePlugin(Plugin):
@@ -34,7 +34,7 @@ class BuildMainPagePlugin(Plugin):
 
     def run(self):
         """Create the main index page."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         # Get published articles with dates
         published_articles = []
@@ -49,7 +49,7 @@ class BuildMainPagePlugin(Plugin):
         recent_article_ids = [aid for (_, aid) in published_articles[:self.num_recent]]
 
         # Create main page
-        page = PageSux(
+        page = PageSkrap(
             name="main:index",
             owner=self.name(),
             meta={
@@ -60,5 +60,5 @@ class BuildMainPagePlugin(Plugin):
             }
         )
 
-        self.db.save_sux(page)
+        self.db.save_skrap(page)
         return 1

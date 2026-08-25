@@ -6,9 +6,9 @@ from suxsom.plugin.plugin import Plugin
 
 
 class WriteHtmlPlugin(Plugin):
-    """Writes HTML files from PageSux products.
+    """Writes HTML files from PageSkrap products.
 
-    Consumes PageSux products and writes HTML files to the output directory.
+    Consumes PageSkrap products and writes HTML files to the output directory.
     """
 
     @classmethod
@@ -35,7 +35,7 @@ class WriteHtmlPlugin(Plugin):
 
     def run(self):
         """Write HTML files for all pages."""
-        pages = self.db.find_all_sux_by_type("page")
+        pages = self.db.find_all_skrap_by_type("page")
 
         files_written = 0
         for page in pages:
@@ -62,7 +62,7 @@ class WriteHtmlPlugin(Plugin):
 
         # Get articles for this page
         article_ids = page.meta.get('article_ids', [])
-        articles = [self.db.find_sux_by_id(aid) for aid in article_ids]
+        articles = [self.db.find_skrap_by_id(aid) for aid in article_ids]
         articles = [a for a in articles if a is not None]
 
         # Generate page based on type

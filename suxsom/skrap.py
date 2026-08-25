@@ -1,25 +1,25 @@
 
 import time
 
-# Global registry of Sux types
-_SUX_TYPE_REGISTRY = {}
+# Global registry of Skrap types
+_SKRAP_TYPE_REGISTRY = {}
 
-def register_sux_type(sux_class):
-    """Register a Sux subclass in the type registry."""
-    type_name = sux_class.typ()
-    _SUX_TYPE_REGISTRY[type_name] = sux_class
-    return sux_class
+def register_skrap_type(skrap_class):
+    """Register a Skrap subclass in the type registry."""
+    type_name = skrap_class.typ()
+    _SKRAP_TYPE_REGISTRY[type_name] = skrap_class
+    return skrap_class
 
-def get_sux_class(type_name):
-    """Get the Sux subclass for a given type name."""
-    if type_name not in _SUX_TYPE_REGISTRY:
-        raise ValueError(f"Unknown sux type: {type_name}")
-    return _SUX_TYPE_REGISTRY[type_name]
+def get_skrap_class(type_name):
+    """Get the Skrap subclass for a given type name."""
+    if type_name not in _SKRAP_TYPE_REGISTRY:
+        raise ValueError(f"Unknown skrap type: {type_name}")
+    return _SKRAP_TYPE_REGISTRY[type_name]
 
-class Sux():
+class Skrap():
     """Base class for all products stored in the database.
 
-    A Sux represents a "product" - something created during blog generation.
+    A Skrap represents a "product" - something created during blog generation.
     Products can be input files, articles, pages, menus, etc.
 
     Attributes:
@@ -33,14 +33,14 @@ class Sux():
 
     @classmethod
     def typ(cls):
-        """Return the type string for this Sux subclass.
+        """Return the type string for this Skrap subclass.
 
         Must be implemented by subclasses.
         """
-        raise NotImplementedError(f"Sux subclass {cls} must implement typ()")
+        raise NotImplementedError(f"Skrap subclass {cls} must implement typ()")
 
     def __init__(self, name, owner, meta=None, last_modified=None, id=None):
-        """Create new sux object (not yet persistent).
+        """Create new skrap object (not yet persistent).
 
         Args:
             name: Unique name for this product
@@ -59,8 +59,8 @@ class Sux():
         self.meta = meta
 
     def persist(self, db):
-        """Save this sux to the database."""
-        return db.save_sux(self)
+        """Save this skrap to the database."""
+        return db.save_skrap(self)
 
     def set_last_modified(self, last_modified=None):
         """Set the last_modified timestamp.
@@ -74,16 +74,16 @@ class Sux():
             self.last_modified = last_modified
 
     def __str__(self):
-        return f"<sux #{self.id} ({self.type}) '{self.name}' from '{self.owner}'>"
+        return f"<skrap #{self.id} ({self.type}) '{self.name}' from '{self.owner}'>"
 
     def __repr__(self):
         return self.__str__()
 
 
-# ==================== Concrete Sux types ====================
+# ==================== Concrete Skrap types ====================
 
-@register_sux_type
-class FileSux(Sux):
+@register_skrap_type
+class FileSkrap(Skrap):
     """Represents a file found by scanfiles.
 
     Metadata keys:
@@ -95,8 +95,8 @@ class FileSux(Sux):
         return "file"
 
 
-@register_sux_type
-class ArticleSux(Sux):
+@register_skrap_type
+class ArticleSkrap(Skrap):
     """Represents a blog article.
 
     Metadata keys:
@@ -112,8 +112,8 @@ class ArticleSux(Sux):
         return "article"
 
 
-@register_sux_type
-class PageSux(Sux):
+@register_skrap_type
+class PageSkrap(Skrap):
     """Represents an output page (single article, archive, etc.).
 
     Metadata keys:
@@ -129,9 +129,9 @@ class PageSux(Sux):
         return "page"
 
 
-# Test sux for test suite
-@register_sux_type
-class TestSux(Sux):
+# Test skrap for test suite
+@register_skrap_type
+class TestSkrap(Skrap):
     @classmethod
     def typ(cls):
         return "test"

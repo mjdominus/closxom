@@ -6,5 +6,5 @@ def test_create_db(tmpdir):
     db.create_tables()
     assert(True)
 
-def test_poo(suxdb):
+def test_poo(skrapdb):
     assert(True)

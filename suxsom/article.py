@@ -5,11 +5,11 @@ import re
 
 import suxsom
 
-class Article(sux):
+class Article(skrap):
     """Functions for dealing with converting disk files to articles,
     parsing articles, etc.
 
-    Why doesn't this inherit from Sux?
+    Why doesn't this inherit from Skrap?
     """
 
     @classmethod

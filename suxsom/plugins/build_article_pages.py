@@ -1,13 +1,13 @@
 """Plugin to build single-article pages."""
 
 from suxsom.plugin.plugin import Plugin
-from suxsom.sux import PageSux
+from suxsom.skrap import PageSkrap
 
 
 class BuildArticlePagesPlugin(Plugin):
-    """Creates PageSux products for individual articles.
+    """Creates PageSkrap products for individual articles.
 
-    Consumes ArticleSux products and produces PageSux products for
+    Consumes ArticleSkrap products and produces PageSkrap products for
     single-article pages.
     """
 
@@ -25,7 +25,7 @@ class BuildArticlePagesPlugin(Plugin):
 
     def run(self):
         """Create a page for each published article."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         pages_created = 0
         for article in articles:
@@ -42,8 +42,8 @@ class BuildArticlePagesPlugin(Plugin):
             else:
                 output_path = f"article_{article.id}.html"
 
-            # Create page sux
-            page = PageSux(
+            # Create page skrap
+            page = PageSkrap(
                 name=f"page:{relpath}",
                 owner=self.name(),
                 meta={
@@ -54,7 +54,7 @@ class BuildArticlePagesPlugin(Plugin):
                 }
             )
 
-            self.db.save_sux(page)
+            self.db.save_skrap(page)
             pages_created += 1
 
         return pages_created

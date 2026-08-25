@@ -7,7 +7,7 @@ from suxsom.plugin.plugin import Plugin
 class ProcessMetaPlugin(Plugin):
     """Parses META sections from article content.
 
-    Processes ArticleSux products, extracting META headers and
+    Processes ArticleSkrap products, extracting META headers and
     separating them from the content. Updates articles in place.
     """
 
@@ -25,7 +25,7 @@ class ProcessMetaPlugin(Plugin):
 
     def run(self):
         """Parse META sections from all articles."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         processed = 0
         for article in articles:
@@ -51,7 +51,7 @@ class ProcessMetaPlugin(Plugin):
                 first_line = content.split('\n', 1)[0].strip() if content else 'Untitled'
                 article.meta['title'] = first_line
 
-            self.db.save_sux(article)
+            self.db.save_skrap(article)
             processed += 1
 
         return processed

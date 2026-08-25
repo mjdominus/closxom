@@ -1,4 +1,4 @@
 
 class Meta(dict):
-    """Metadata of a sux.  Currently nothing but a raw dictionary."""
+    """Metadata of a skrap.  Currently nothing but a raw dictionary."""
     pass

@@ -2,11 +2,11 @@
 
 from collections import defaultdict
 from suxsom.plugin.plugin import Plugin
-from suxsom.sux import PageSux
+from suxsom.skrap import PageSkrap
 
 
 class BuildTopicArchivesPlugin(Plugin):
-    """Creates PageSux products for topic/tag archives.
+    """Creates PageSkrap products for topic/tag archives.
 
     Groups articles by their tags/topics and creates archive pages.
     """
@@ -25,7 +25,7 @@ class BuildTopicArchivesPlugin(Plugin):
 
     def run(self):
         """Create topic archive pages."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         # Group articles by topic/tag
         topic_archives = defaultdict(list)
@@ -72,7 +72,7 @@ class BuildTopicArchivesPlugin(Plugin):
             # Create URL-friendly topic name
             topic_slug = topic.lower().replace(' ', '-')
 
-            page = PageSux(
+            page = PageSkrap(
                 name=f"archive:topic:{topic_slug}",
                 owner=self.name(),
                 meta={
@@ -84,7 +84,7 @@ class BuildTopicArchivesPlugin(Plugin):
                 }
             )
 
-            self.db.save_sux(page)
+            self.db.save_skrap(page)
             pages_created += 1
 
         return pages_created
@@ -94,7 +94,7 @@ class BuildTopicArchivesPlugin(Plugin):
         articles_with_dates = []
 
         for article_id in article_ids:
-            article = self.db.find_sux_by_id(article_id)
+            article = self.db.find_skrap_by_id(article_id)
             if article and 'date' in article.meta:
                 articles_with_dates.append((article.meta['date'], article_id))
 

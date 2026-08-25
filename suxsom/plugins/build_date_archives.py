@@ -3,11 +3,11 @@
 from datetime import datetime
 from collections import defaultdict
 from suxsom.plugin.plugin import Plugin
-from suxsom.sux import PageSux
+from suxsom.skrap import PageSkrap
 
 
 class BuildDateArchivesPlugin(Plugin):
-    """Creates PageSux products for date-based archives.
+    """Creates PageSkrap products for date-based archives.
 
     Groups articles by year and month, creating archive pages for each.
     """
@@ -26,7 +26,7 @@ class BuildDateArchivesPlugin(Plugin):
 
     def run(self):
         """Create date archive pages."""
-        articles = self.db.find_all_sux_by_type("article")
+        articles = self.db.find_all_skrap_by_type("article")
 
         # Group articles by year and month
         year_archives = defaultdict(list)
@@ -56,7 +56,7 @@ class BuildDateArchivesPlugin(Plugin):
             # Sort by date (newest first)
             article_ids_sorted = self.sort_articles_by_date(article_ids, reverse=True)
 
-            page = PageSux(
+            page = PageSkrap(
                 name=f"archive:year:{year}",
                 owner=self.name(),
                 meta={
@@ -68,7 +68,7 @@ class BuildDateArchivesPlugin(Plugin):
                 }
             )
 
-            self.db.save_sux(page)
+            self.db.save_skrap(page)
             pages_created += 1
 
         # Create month archive pages
@@ -78,7 +78,7 @@ class BuildDateArchivesPlugin(Plugin):
 
             month_name = datetime(year, month, 1).strftime('%B')
 
-            page = PageSux(
+            page = PageSkrap(
                 name=f"archive:month:{year}-{month:02d}",
                 owner=self.name(),
                 meta={
@@ -91,7 +91,7 @@ class BuildDateArchivesPlugin(Plugin):
                 }
             )
 
-            self.db.save_sux(page)
+            self.db.save_skrap(page)
             pages_created += 1
 
         return pages_created
@@ -101,7 +101,7 @@ class BuildDateArchivesPlugin(Plugin):
         articles_with_dates = []
 
         for article_id in article_ids:
-            article = self.db.find_sux_by_id(article_id)
+            article = self.db.find_skrap_by_id(article_id)
             if article and 'date' in article.meta:
                 articles_with_dates.append((article.meta['date'], article_id))
 

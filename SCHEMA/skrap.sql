@@ -1,4 +1,4 @@
-CREATE TABLE `sux` (
+CREATE TABLE `skrap` (
   id integer PRIMARY KEY,
   name varchar(64) NOT NULL,
   type varchar(16) NOT NULL,

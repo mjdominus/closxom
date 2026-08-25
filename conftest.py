@@ -4,7 +4,7 @@ import pytest
 import sys
 
 @pytest.fixture
-def suxdb(tmpdir):
+def skrapdb(tmpdir):
     db = DB(tmpdir / "test.db")
     db.create_tables()
     return db

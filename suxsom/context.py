@@ -1,5 +1,5 @@
 
-class SuxNotFound(Exception):
+class SkrapNotFound(Exception):
     pass
 
 class Context():
@@ -17,18 +17,18 @@ class Context():
         if fail_ok:
             return None
         else:
-            raise SuxNotFound(msg)
+            raise SkrapNotFound(msg)
 
     def find_by_name(self, owner, name, fail_ok=True):
-        for sux in self.i:
-            if sux.owner == owner and self.name == name:
-                return sux
-        return self.failed(fail_ok, f"Context has no sux '{name}' owned by '{owner}'")
+        for skrap in self.i:
+            if skrap.owner == owner and self.name == name:
+                return skrap
+        return self.failed(fail_ok, f"Context has no skrap '{name}' owned by '{owner}'")
 
     def find_by_owner(self, owner):
-        found = [ sux for sux in self.i if sux.owner == owner ]
+        found = [ skrap for skrap in self.i if skrap.owner == owner ]
         return found
 
     def find_by_types(self, types):
-        found = [ sux for sux in self.i if sux.type in types ]
+        found = [ skrap for skrap in self.i if skrap.type in types ]
         return found

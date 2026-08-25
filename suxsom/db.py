@@ -4,12 +4,12 @@ import sqlite3
 import sys
 import json
 
-import suxsom.sux
+import suxsom.skrap
 
 class DB():
     """Database abstraction layer for suxsom.
 
-    Provides high-level methods for managing products (sux objects),
+    Provides high-level methods for managing products (skrap objects),
     plugins, and metadata.
     """
 
@@ -56,70 +56,70 @@ class DB():
         row = c.fetchone()
         return row['id'] if row else None
 
-    # ==================== Sux (product) queries ====================
+    # ==================== Skrap (product) queries ====================
 
-    def find_sux_by_id(self, id):
-        """Find a sux by its database ID."""
+    def find_skrap_by_id(self, id):
+        """Find a skrap by its database ID."""
         c = self.conn.cursor()
-        c.execute("SELECT * FROM sux WHERE id = ?", (id, ))
+        c.execute("SELECT * FROM skrap WHERE id = ?", (id, ))
         rec = c.fetchone()
         if rec is None:
             return None
-        return self._sux_from_row(rec)
+        return self._skrap_from_row(rec)
 
-    def find_sux_by_name(self, owner_name, name):
-        """Find a sux by owner plugin name and sux name."""
+    def find_skrap_by_name(self, owner_name, name):
+        """Find a skrap by owner plugin name and skrap name."""
         owner_id = self.get_plugin_id(owner_name)
         if owner_id is None:
             return None
 
         c = self.conn.cursor()
-        c.execute("SELECT * FROM sux WHERE owner_id = ? AND name = ?",
+        c.execute("SELECT * FROM skrap WHERE owner_id = ? AND name = ?",
                   (owner_id, name))
         rec = c.fetchone()
         if rec is None:
             return None
-        return self._sux_from_row(rec)
+        return self._skrap_from_row(rec)
 
-    def find_all_sux_by_type(self, type_name):
-        """Find all sux objects of a given type.
+    def find_all_skrap_by_type(self, type_name):
+        """Find all skrap objects of a given type.
 
-        Returns a list of sux objects.
+        Returns a list of skrap objects.
         """
         c = self.conn.cursor()
-        c.execute("SELECT * FROM sux WHERE type = ?", (type_name,))
-        return [self._sux_from_row(row) for row in c.fetchall()]
+        c.execute("SELECT * FROM skrap WHERE type = ?", (type_name,))
+        return [self._skrap_from_row(row) for row in c.fetchall()]
 
-    def find_all_sux_by_owner(self, owner_name):
-        """Find all sux objects owned by a given plugin.
+    def find_all_skrap_by_owner(self, owner_name):
+        """Find all skrap objects owned by a given plugin.
 
-        Returns a list of sux objects.
+        Returns a list of skrap objects.
         """
         owner_id = self.get_plugin_id(owner_name)
         if owner_id is None:
             return []
 
         c = self.conn.cursor()
-        c.execute("SELECT * FROM sux WHERE owner_id = ?", (owner_id,))
-        return [self._sux_from_row(row) for row in c.fetchall()]
+        c.execute("SELECT * FROM skrap WHERE owner_id = ?", (owner_id,))
+        return [self._skrap_from_row(row) for row in c.fetchall()]
 
-    def find_all_sux(self):
-        """Find all sux objects in the database."""
+    def find_all_skrap(self):
+        """Find all skrap objects in the database."""
         c = self.conn.cursor()
-        c.execute("SELECT * FROM sux")
-        return [self._sux_from_row(row) for row in c.fetchall()]
+        c.execute("SELECT * FROM skrap")
+        return [self._skrap_from_row(row) for row in c.fetchall()]
 
-    def _sux_from_row(self, row):
-        """Construct a Sux object from a database row."""
+    def _skrap_from_row(self, row):
+        """Construct a Skrap object from a database row."""
         # Get the plugin name from the owner_id
         c = self.conn.cursor()
         c.execute("SELECT name FROM plugin WHERE id = ?", (row['owner_id'],))
         plugin_row = c.fetchone()
         owner_name = plugin_row['name'] if plugin_row else "unknown"
 
-        # Create the appropriate Sux subclass based on type
-        sux_class = suxsom.sux.get_sux_class(row['type'])
-        sux_obj = sux_class(
+        # Create the appropriate Skrap subclass based on type
+        skrap_class = suxsom.skrap.get_skrap_class(row['type'])
+        skrap_obj = skrap_class(
             name=row['name'],
             owner=owner_name,
             last_modified=row['last_modified'],
@@ -127,14 +127,14 @@ class DB():
         )
 
         # Load metadata
-        sux_obj.meta = self._load_metadata(row['id'])
+        skrap_obj.meta = self._load_metadata(row['id'])
 
-        return sux_obj
+        return skrap_obj
 
-    def _load_metadata(self, sux_id):
-        """Load all metadata for a sux object."""
+    def _load_metadata(self, skrap_id):
+        """Load all metadata for a skrap object."""
         c = self.conn.cursor()
-        c.execute("SELECT k, v FROM meta WHERE sux_id = ?", (sux_id,))
+        c.execute("SELECT k, v FROM meta WHERE skrap_id = ?", (skrap_id,))
         meta = {}
         for row in c.fetchall():
             # Try to deserialize JSON values, fall back to raw string
@@ -144,20 +144,20 @@ class DB():
                 meta[row['k']] = row['v']
         return meta
 
-    # ==================== Sux (product) creation and updates ====================
+    # ==================== Skrap (product) creation and updates ====================
 
-    def create_sux(self, type_name, name, owner_name, meta=None):
-        """Create a new sux object and save it to the database.
+    def create_skrap(self, type_name, name, owner_name, meta=None):
+        """Create a new skrap object and save it to the database.
 
-        Returns the created sux object with its database ID populated.
+        Returns the created skrap object with its database ID populated.
         """
-        sux_class = suxsom.sux.get_sux_class(type_name)
-        sux_obj = sux_class(name=name, owner=owner_name, meta=meta)
-        self.save_sux(sux_obj)
-        return sux_obj
+        skrap_class = suxsom.skrap.get_skrap_class(type_name)
+        skrap_obj = skrap_class(name=name, owner=owner_name, meta=meta)
+        self.save_skrap(skrap_obj)
+        return skrap_obj
 
-    def save_sux(self, o):
-        """Save or update a sux object in the database."""
+    def save_skrap(self, o):
+        """Save or update a skrap object in the database."""
         import time
         o.set_last_modified()
 
@@ -165,36 +165,36 @@ class DB():
         owner_id = self.ensure_plugin_registered(o.owner)
 
         if o.id is None:
-            # Insert new sux
+            # Insert new skrap
             self.conn.execute("""
-                INSERT INTO sux(name, type, owner_id, last_modified)
+                INSERT INTO skrap(name, type, owner_id, last_modified)
                 VALUES (?, ?, ?, ?)
             """, (o.name, o.type, owner_id, o.last_modified))
             c = self.conn.cursor()
             c.execute("""
-                SELECT id FROM sux
+                SELECT id FROM skrap
                 WHERE name = ? AND owner_id = ?
             """, (o.name, owner_id))
             o.id = c.fetchone()['id']
         else:
-            # Update existing sux
+            # Update existing skrap
             self.conn.execute("""
-                UPDATE sux SET name = ?, type = ?, owner_id = ?, last_modified = ?
+                UPDATE skrap SET name = ?, type = ?, owner_id = ?, last_modified = ?
                 WHERE id = ?
             """, (o.name, o.type, owner_id, o.last_modified, o.id))
 
-        self.save_sux_metadata(o)
+        self.save_skrap_metadata(o)
         self.conn.commit()
 
         return o.id
 
-    def save_sux_metadata(self, o):
-        """Save metadata for a sux object."""
+    def save_skrap_metadata(self, o):
+        """Save metadata for a skrap object."""
         if o.id is None:
-            raise Exception("Cannot save metadata for sux without ID")
+            raise Exception("Cannot save metadata for skrap without ID")
 
         # Delete existing metadata
-        self.conn.execute("DELETE FROM meta WHERE sux_id = ?", (o.id,))
+        self.conn.execute("DELETE FROM meta WHERE skrap_id = ?", (o.id,))
 
         # Insert new metadata
         for k, v in o.meta.items():
@@ -205,7 +205,7 @@ class DB():
                 v_serialized = v
 
             self.conn.execute("""
-                INSERT INTO meta (sux_id, k, v)
+                INSERT INTO meta (skrap_id, k, v)
                 VALUES (?, ?, ?)
             """, (o.id, k, v_serialized))
 
