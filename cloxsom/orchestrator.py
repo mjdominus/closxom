@@ -12,8 +12,9 @@ class PluginOrchestrator:
     The orchestrator builds a dependency graph and executes plugins in the correct order.
     """
 
-    def __init__(self, db):
+    def __init__(self, db, config=None):
         self.db = db
+        self.config = config or {}
         self.plugins: List[Type] = []
         self.plugin_instances: Dict[str, object] = {}
 
@@ -110,7 +111,7 @@ class PluginOrchestrator:
             if verbose:
                 print(f"Running plugin: {plugin_name}", file=sys.stderr)
 
-            plugin = plugin_class(self.db)
+            plugin = plugin_class(self.db, self.config)
             self.plugin_instances[plugin_name] = plugin
 
             try:

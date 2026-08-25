@@ -22,15 +22,13 @@ class BuildMainPagePlugin(Plugin):
     def outputs(cls):
         return ["page"]
 
-    def __init__(self, db, num_recent=12):
+    def __init__(self, db, config=None):
         """Initialize the main page builder.
 
-        Args:
-            db: Database handle
-            num_recent: Number of recent articles to show (default 12)
+        Reads config['recent'] (defaults to 12).
         """
-        super().__init__(db)
-        self.num_recent = num_recent
+        super().__init__(db, config)
+        self.num_recent = self.config.get('recent', 12)
 
     def run(self):
         """Create the main index page."""

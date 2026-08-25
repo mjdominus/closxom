@@ -58,7 +58,8 @@ def main():
             print(f"Using existing database: {db_path}", file=sys.stderr)
 
     # Create orchestrator and register plugins
-    orchestrator = PluginOrchestrator(db)
+    config = {'input_dir': args.input, 'output_dir': args.output, 'recent': args.recent}
+    orchestrator = PluginOrchestrator(db, config)
 
     # File handling plugins
     orchestrator.register(ScanFilesPlugin)

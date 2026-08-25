@@ -2,11 +2,10 @@
 
 ## Milestones
 
-- `run-plugin` CLI tool: load a single named plugin by name and call its `run()` method,
-  bypassing the full `genblog` pipeline/orchestrator. Signature: `run-plugin plugin-name args...`
-  — args accepted but ignored for now; will be passed to `run()` once plugins take arguments.
-  Prerequisite (done): per-plugin logging via `self.log` in the `Plugin` base class, configured
-  centrally in `cloxsom/logconfig.py`.
+- `run-plugin` CLI tool (done): loads a single named plugin by name and calls its `run()`
+  method, bypassing the full `genblog` pipeline/orchestrator. `run-plugin plugin-name args...
+  --input DIR --db FILE` — trailing args accepted but ignored for now; will be passed to
+  `run()` once plugins take arguments.
 - Test suite: planned, shape not yet decided.
 
 ## Architecture
@@ -27,6 +26,8 @@
   files for tombstoned pages
 - Skrap metadata values should carry a type, defaulting to `string` but also supporting
   things like `pathlib.Path` or `int` — similar in spirit to argparse's `type=` parameter
+- `run-plugin` should discover available plugins at run time instead of importing a
+  hardcoded list (`PLUGINS` dict in `run-plugin` currently lists each plugin class by hand)
 
 ## Unimplemented features
 
@@ -40,8 +41,6 @@
 
 ## Known bugs
 
-- `--input` / `--output` / `--recent` are parsed by `genblog` but never passed to
-  plugins — plugins use hardcoded defaults (`articles/`, `output/`, 12)
 - `cloxsom/article.py` is dead code from the pre-draft era — buggy, unused; delete
   or rewrite as a plugin
 - `build_topic_archives` can double-count articles with overlapping tag fields

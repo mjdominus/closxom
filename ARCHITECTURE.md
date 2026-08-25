@@ -35,6 +35,7 @@ filesystem
 | Path | What it is |
 |------|-----------|
 | `genblog` | Entry point.  Parses CLI args, opens DB, registers plugins, calls orchestrator. |
+| `run-plugin` | Loads and runs a single plugin by name, outside the full orchestrator — for exercising one plugin in isolation. Same `--input`/`--db` overrides as `genblog`. |
 | `SCHEMA/skrap.sql` | `skrap` table: id, name, type, owner\_id, last\_modified |
 | `SCHEMA/meta.sql` | `meta` table: key/value metadata attached to a skrap |
 | `SCHEMA/plugin.sql` | `plugin` table: maps plugin name → integer id |
@@ -42,7 +43,7 @@ filesystem
 | `cloxsom/skrap.py` | `Skrap` base class + concrete types (`FileSkrap`, `ArticleSkrap`, `PageSkrap`, `TestSkrap`).  Includes a type registry (`register_skrap_type` / `get_skrap_class`). |
 | `cloxsom/db.py` | `DB` class — SQLite wrapper.  CRUD for skrap objects and metadata, plugin registration. Metadata values are JSON-serialised for complex types. |
 | `cloxsom/orchestrator.py` | `PluginOrchestrator` — builds dependency graph from plugin `inputs()`/`outputs()` declarations, topological-sorts, then calls `plugin.run()` in order. |
-| `cloxsom/plugin/plugin.py` | `Plugin` abstract base class.  Subclasses implement `name()`, `inputs()`, `outputs()`, `run()`. |
+| `cloxsom/plugin/plugin.py` | `Plugin` abstract base class.  Subclasses implement `name()`, `inputs()`, `outputs()`, `run()`.  Constructor takes `(db, config=None)`; `config` is a plain dict (`input_dir`, `output_dir`, `recent`, ...) passed through unchanged by the orchestrator / `run-plugin` — most plugins ignore it, a few read specific keys. |
 | `cloxsom/plugins/scanfiles.py` | Walks `articles/` directory, creates one `FileSkrap` per file. |
 | `cloxsom/plugins/readfiles.py` | Reads each `FileSkrap` file from disk, creates an `ArticleSkrap` with `original_content`. |
 | `cloxsom/plugins/notyet.py` | Marks articles unpublished if a matching `.notyet` file exists. |

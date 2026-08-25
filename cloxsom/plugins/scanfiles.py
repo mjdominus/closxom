@@ -24,15 +24,13 @@ class ScanFilesPlugin(Plugin):
     def outputs(cls):
         return ["file"]
 
-    def __init__(self, db, input_dir=None):
+    def __init__(self, db, config=None):
         """Initialize the scanfiles plugin.
 
-        Args:
-            db: Database handle
-            input_dir: Directory to scan (defaults to 'articles')
+        Reads config['input_dir'] (defaults to 'articles').
         """
-        super().__init__(db)
-        self.input_dir = Path(input_dir) if input_dir else Path("articles")
+        super().__init__(db, config)
+        self.input_dir = Path(self.config.get('input_dir') or "articles")
 
     def run(self):
         """Scan the input directory for article files."""

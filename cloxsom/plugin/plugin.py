@@ -31,9 +31,14 @@ class Plugin():
         """Return list of product type strings this plugin produces."""
         raise NotImplementedError(f"Plugin {cls} must implement outputs()")
 
-    def __init__(self, db):
-        """Initialize plugin with database handle."""
+    def __init__(self, db, config=None):
+        """Initialize plugin with database handle and shared run config.
+
+        config is a dict of settings passed by the entry point (input_dir,
+        output_dir, etc.) that any plugin may consult; unused by most.
+        """
         self.db = db
+        self.config = config or {}
         self.log = logging.getLogger(f"cloxsom.plugin.{self.name()}")
 
     def run(self):
