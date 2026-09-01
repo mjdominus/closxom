@@ -40,6 +40,10 @@
 - Need to handle articles that have an explicit publication date in their META section.
   Not yet clear how responsibility for this should be divided between `process_meta`
   (which parses META) and `notyet` (which currently decides published/unpublished status)
+- (Low priority — very late, if at all) `genblog` could have a config file giving explicit
+  plugin dependency information, as lines of the form `A B -> C D` meaning plugins A and B
+  must run before C and D. `genblog` would topologically sort these lines to decide which
+  plugins to run and in what order
 
 ## Unimplemented features
 
