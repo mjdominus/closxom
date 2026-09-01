@@ -1,17 +1,14 @@
 """Plugin to compute publication dates for articles."""
 
-import re
 from datetime import datetime
-from pathlib import Path
 from cloxsom.plugin.plugin import Plugin
 
 
 class ComputeDatesPlugin(Plugin):
     """Computes publication dates for articles.
 
-    Uses metadata 'date' field if present, otherwise tries to extract
-    from the file path (Blosxom-style /YYYY/MM/DD/ paths), and finally
-    falls back to file modification time.
+    Uses metadata 'date' field if present, otherwise falls back to
+    file modification time.
     """
 
     @classmethod
@@ -41,11 +38,6 @@ class ComputeDatesPlugin(Plugin):
             # Try to parse from META date field
             if 'date' in article.meta and isinstance(article.meta['date'], str):
                 date_timestamp = self.parse_date_string(article.meta['date'])
-
-            # Try to extract from path (Blosxom style: /YYYY/MM/DD/)
-            if date_timestamp is None:
-                relpath = article.meta.get('relpath', '')
-                date_timestamp = self.extract_date_from_path(relpath)
 
             # Fall back to file mtime
             if date_timestamp is None:
@@ -79,32 +71,5 @@ class ComputeDatesPlugin(Plugin):
                 return dt.timestamp()
             except ValueError:
                 continue
-
-        return None
-
-    def extract_date_from_path(self, path):
-        """Extract date from Blosxom-style path.
-
-        Looks for patterns like: /YYYY/MM/DD/ or /YYYY/MM/ in the path.
-        """
-        # Pattern: /YYYY/MM/DD/
-        match = re.search(r'/(\d{4})/(\d{2})/(\d{2})/', path)
-        if match:
-            year, month, day = match.groups()
-            try:
-                dt = datetime(int(year), int(month), int(day))
-                return dt.timestamp()
-            except ValueError:
-                pass
-
-        # Pattern: /YYYY/MM/
-        match = re.search(r'/(\d{4})/(\d{2})/', path)
-        if match:
-            year, month = match.groups()
-            try:
-                dt = datetime(int(year), int(month), 1)
-                return dt.timestamp()
-            except ValueError:
-                pass
 
         return None
