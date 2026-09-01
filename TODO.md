@@ -61,7 +61,8 @@
   or rewrite as a plugin
 - `build_topic_archives` can double-count articles with overlapping tag fields
   (`tags`, `topic`, `category`)
-- `readfiles` and `process_meta` unconditionally resave every object on every run
-  (unlike `compute_dates`, which correctly checks before saving) — blocks the
-  incremental-rebuild work above, since one holdout plugin touching
-  `last_updated` reopens false-staleness cascades for everything downstream
+- `process_meta` unconditionally resaves every article on every run (unlike
+  `compute_dates`, which correctly checks before saving, and `readfiles`,
+  which now does too) — blocks the incremental-rebuild work above, since one
+  holdout plugin touching `last_updated` reopens false-staleness cascades for
+  everything downstream

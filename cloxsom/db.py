@@ -164,6 +164,19 @@ class DB():
         self.save_skrap(skrap_obj)
         return skrap_obj
 
+    def find_or_create_skrap(self, type_name, name, owner_name):
+        """Find an existing skrap by (owner_name, name), or construct a
+        new, not-yet-saved one of the given type if none exists.
+
+        Does not save - callers should set whatever meta/content they
+        need and then call save_skrap().
+        """
+        existing = self.find_skrap_by_name(owner_name, name)
+        if existing is not None:
+            return existing
+        skrap_class = cloxsom.skrap.get_skrap_class(type_name)
+        return skrap_class(name=name, owner=owner_name)
+
     def save_skrap(self, o):
         """Save or update a skrap object in the database."""
         import time

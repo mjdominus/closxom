@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from cloxsom.plugin.plugin import Plugin
-from cloxsom.skrap import ArticleSkrap
 
 
 class ReadFilesPlugin(Plugin):
@@ -59,20 +58,11 @@ class ReadFilesPlugin(Plugin):
         file_skrap.content = new_content
         self.db.save_skrap(file_skrap)
 
-        new_meta = {
+        article = self.db.find_or_create_skrap("article", target, self.name())
+        article.meta.update({
             'path': file_skrap.meta['path'],
             'relpath': file_skrap.meta['relpath'],
             'file_mtime': file_skrap.meta['file_mtime']
-        }
-
-        # Update the existing article skrap in place if one already
-        # exists for this name, rather than trying to insert a second
-        # row and hitting the UNIQUE(name, owner_id) constraint.
-        article = self.db.find_skrap_by_name(self.name(), target)
-        if article is None:
-            article = ArticleSkrap(name=target, owner=self.name(), meta=new_meta)
-        else:
-            article.meta.update(new_meta)
-
+        })
         article.content = new_content
         self.db.save_skrap(article)
