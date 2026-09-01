@@ -29,7 +29,7 @@ class ProcessMetaPlugin(Plugin):
 
         processed = 0
         for article in articles:
-            content = article.meta.get('original_content', '')
+            content = article.content or ''
 
             # Check if content starts with META
             if content.startswith('META\n'):
@@ -37,7 +37,7 @@ class ProcessMetaPlugin(Plugin):
 
                 # Update article metadata
                 article.meta.update(meta_dict)
-                article.meta['content'] = body
+                article.content = body
 
                 # If no title was found in META, use first line of body
                 if 'title' not in article.meta and body:
@@ -47,7 +47,6 @@ class ProcessMetaPlugin(Plugin):
 
             else:
                 # No META section - use first line as title
-                article.meta['content'] = content
                 first_line = content.split('\n', 1)[0].strip() if content else 'Untitled'
                 article.meta['title'] = first_line
 

@@ -29,6 +29,9 @@ class Skrap():
         owner: Name of the plugin that created this product
         meta: Dictionary of metadata
         last_updated: Unix timestamp this record was last written
+        content: The skrap's primary payload (article text, generated HTML,
+            etc.), as opposed to metadata about that payload. None if this
+            skrap has no content of its own.
     """
 
     @classmethod
@@ -39,7 +42,7 @@ class Skrap():
         """
         raise NotImplementedError(f"Skrap subclass {cls} must implement typ()")
 
-    def __init__(self, name, owner, meta=None, last_updated=None, id=None):
+    def __init__(self, name, owner, meta=None, last_updated=None, id=None, content=None):
         """Create new skrap object (not yet persistent).
 
         Args:
@@ -48,6 +51,7 @@ class Skrap():
             meta: Optional metadata dictionary
             last_updated: Optional timestamp (defaults to current time)
             id: Optional database ID (for loaded objects)
+            content: Optional primary payload for this skrap
         """
         self.id = id
         self.type = self.typ()
@@ -57,6 +61,7 @@ class Skrap():
         if meta is None:
             meta = {}
         self.meta = meta
+        self.content = content
 
     def persist(self, db):
         """Save this skrap to the database."""

@@ -130,7 +130,8 @@ class DB():
             name=row['name'],
             owner=owner_name,
             last_updated=row['last_updated'],
-            id=row['id']
+            id=row['id'],
+            content=row['content']
         )
 
         # Load metadata
@@ -153,13 +154,13 @@ class DB():
 
     # ==================== Skrap (product) creation and updates ====================
 
-    def create_skrap(self, type_name, name, owner_name, meta=None):
+    def create_skrap(self, type_name, name, owner_name, meta=None, content=None):
         """Create a new skrap object and save it to the database.
 
         Returns the created skrap object with its database ID populated.
         """
         skrap_class = cloxsom.skrap.get_skrap_class(type_name)
-        skrap_obj = skrap_class(name=name, owner=owner_name, meta=meta)
+        skrap_obj = skrap_class(name=name, owner=owner_name, meta=meta, content=content)
         self.save_skrap(skrap_obj)
         return skrap_obj
 
@@ -174,9 +175,9 @@ class DB():
         if o.id is None:
             # Insert new skrap
             self.conn.execute("""
-                INSERT INTO skrap(name, type, owner_id, last_updated)
-                VALUES (?, ?, ?, ?)
-            """, (o.name, o.type, owner_id, o.last_updated))
+                INSERT INTO skrap(name, type, owner_id, last_updated, content)
+                VALUES (?, ?, ?, ?, ?)
+            """, (o.name, o.type, owner_id, o.last_updated, o.content))
             c = self.conn.cursor()
             c.execute("""
                 SELECT id FROM skrap
@@ -186,9 +187,9 @@ class DB():
         else:
             # Update existing skrap
             self.conn.execute("""
-                UPDATE skrap SET name = ?, type = ?, owner_id = ?, last_updated = ?
+                UPDATE skrap SET name = ?, type = ?, owner_id = ?, last_updated = ?, content = ?
                 WHERE id = ?
-            """, (o.name, o.type, owner_id, o.last_updated, o.id))
+            """, (o.name, o.type, owner_id, o.last_updated, o.content, o.id))
 
         self.save_skrap_metadata(o)
         self.conn.commit()

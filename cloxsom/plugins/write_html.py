@@ -77,7 +77,7 @@ class WriteHtmlPlugin(Plugin):
             return "<html><body>Article not found</body></html>"
 
         title = article.meta.get('title', 'Untitled')
-        content = article.meta.get('content', '')
+        content = article.content or ''
         date = article.meta.get('date')
 
         date_str = ''
