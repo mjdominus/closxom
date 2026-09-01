@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 
-import cloxsom.db
-import cloxsom.sux
+from cloxsom.db import DB
+from cloxsom.skrap import TestSkrap
 
-db = cloxsom.db.db()
-db.create_tables()
 
-o = cloxsom.sux.sux("testobject", "tester")
-id = db.save_sux(o)
-print(id)
+def main():
+    db = DB()
+    db.create_tables()
+
+    o = TestSkrap("testobject", "tester")
+    id = db.save_skrap(o)
+    print(id)
+
+
+if __name__ == '__main__':
+    main()

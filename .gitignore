@@ -6,3 +6,4 @@ cloxsom.db
 # Test data and generated output
 /articles/
 /output/
+/sample/
