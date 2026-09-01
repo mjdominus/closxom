@@ -12,7 +12,7 @@
 
 - Design and document improved plugin API
 - New plugin protocol to replace unconditional full-regen `run()`: each plugin implements
-  `default_target_list()`, `dependencies_of(target)`, `build(target)`, with generic
+  `default_target_list()`, `dependencies_of(target)`, `build_target(target)`, with generic
   `run(targets=None)` / `need_to_rebuild(target, deps)` on the base `Plugin` class —
   enables incremental rebuilds and partial CLI invocation (e.g. rebuild just one year's archive)
 - Layering rule: a plugin's `need_to_rebuild` may only compare against its declared

@@ -2,6 +2,9 @@ import logging
 
 # abstract class for plugins
 
+class UnimplementedMethod(Exception):
+    pass
+
 class Plugin():
     """Base class for all plugins.
 
@@ -9,7 +12,12 @@ class Plugin():
     - name(): Return the plugin's unique name
     - inputs(): Return list of product types this plugin consumes
     - outputs(): Return list of product types this plugin produces
-    - run(): Execute the plugin's main logic
+    - default_target_list(): Return list of target names to build by default
+    - dependencies_of(target): Return list of skraps a target depends on
+    - build_target(target): Build (and save) a single target
+
+    run() is provided by this base class and should not normally need
+    to be overridden.
     """
 
     @classmethod
@@ -41,13 +49,57 @@ class Plugin():
         self.config = config or {}
         self.log = logging.getLogger(f"cloxsom.plugin.{self.name()}")
 
-    def run(self):
-        """Execute the plugin's main logic.
+    def default_target_list(self):
+        """Return the list of target names to build when run() is called
+        without an explicit target_list."""
+        raise UnimplementedMethod(f"Plugin {self.__class__} must implement default_target_list()")
 
-        This method should query the database for input products,
-        process them, and create new output products.
+    def dependencies_of(self, target):
+        """Return the list of skraps that the given target depends on."""
+        raise UnimplementedMethod(f"Plugin {self.__class__} must implement dependencies_of()")
+
+    def build_target(self, target):
+        """Build (and save) the given target."""
+        raise UnimplementedMethod(f"Plugin {self.__class__} must implement build_target()")
+
+    def run(self, target_list=None, options=None):
+        """Build each target in target_list, skipping any that are already
+        up to date.
+
+        target_list defaults to self.default_target_list(). options
+        defaults to {}.
+
+        For each target, if it does not already exist, build_target(target)
+        is called. Otherwise, the target's dependencies (from
+        dependencies_of(target)) are compared against the target's own
+        last_updated time; if any dependency is newer, the target is stale
+        and build_target(target) is called again. Otherwise the target is
+        skipped.
         """
-        raise NotImplementedError(f"Plugin {self.__class__} must implement run()")
+        if target_list is None:
+            target_list = self.default_target_list()
+        if options is None:
+            options = {}
+
+        for target in target_list:
+            existing = self.db.find_skrap_by_name(self.name(), target)
+
+            if existing is None:
+                self.log.info("Building target %r: does not exist yet", target)
+                self.build_target(target)
+                continue
+
+            deps = self.dependencies_of(target)
+            stale_deps = [dep for dep in deps if dep.last_updated >= existing.last_updated]
+
+            if stale_deps:
+                self.log.info(
+                    "Rebuilding target %r: dependencies changed: %s",
+                    target, ", ".join(str(dep) for dep in stale_deps),
+                )
+                self.build_target(target)
+            else:
+                self.log.info("Skipping target %r: up to date", target)
 
     def __str__(self):
         return f"<plugin {self.name()}>"
