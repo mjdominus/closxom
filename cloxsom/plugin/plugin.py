@@ -101,6 +101,46 @@ class Plugin():
             else:
                 self.log.info("Skipping target %r: up to date", target)
 
+    def update_skrap_meta(self, skrap, **kwargs):
+        """Set one or more meta keys on skrap, saving it only if a value
+        actually changed.
+
+        For each key=value pair, the key counts as changed if it is
+        absent from skrap.meta or its current value differs. If any key
+        changed, skrap.meta is updated and the skrap is saved. Bools are
+        normalized to 0/1 first, since that is how the meta store holds
+        them. Returns True if a save occurred, False otherwise.
+        """
+        changed = False
+        for key, value in kwargs.items():
+            if isinstance(value, bool):
+                value = int(value)
+            if key not in skrap.meta or skrap.meta[key] != value:
+                skrap.meta[key] = value
+                changed = True
+        if changed:
+            self.db.save_skrap(skrap)
+        return changed
+
+    def set_skrap_meta_defaults(self, skrap, **kwargs):
+        """Set meta keys on skrap only where they are currently absent,
+        analogous to dict.setdefault, saving it only if a key was added.
+
+        Keys already present in skrap.meta are left untouched, whatever
+        their value. Bools are normalized to 0/1. Returns True if a save
+        occurred, False otherwise.
+        """
+        changed = False
+        for key, value in kwargs.items():
+            if key not in skrap.meta:
+                if isinstance(value, bool):
+                    value = int(value)
+                skrap.meta[key] = value
+                changed = True
+        if changed:
+            self.db.save_skrap(skrap)
+        return changed
+
     def __str__(self):
         return f"<plugin {self.name()}>"
 

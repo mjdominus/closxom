@@ -145,11 +145,15 @@ class DB():
         c.execute("SELECT k, v FROM meta WHERE skrap_id = ?", (skrap_id,))
         meta = {}
         for row in c.fetchall():
-            # Try to deserialize JSON values, fall back to raw string
-            try:
-                meta[row['k']] = json.loads(row['v'])
-            except (json.JSONDecodeError, TypeError):
-                meta[row['k']] = row['v']
+            v = row['v']
+            # Only compound values (lists, dicts) are JSON-encoded on
+            # save; scalars are stored as-is.
+            if isinstance(v, str) and v[:1] in ('[', '{'):
+                try:
+                    v = json.loads(v)
+                except json.JSONDecodeError:
+                    pass
+            meta[row['k']] = v
         return meta
 
     # ==================== Skrap (product) creation and updates ====================
@@ -222,9 +226,12 @@ class DB():
 
         # Insert new metadata
         for k, v in o.meta.items():
-            # Serialize complex values as JSON
+            # Serialize compound values as JSON; store scalars as-is.
+            # SQLite has no boolean type, so coerce bools to 0/1.
             if isinstance(v, (dict, list)):
                 v_serialized = json.dumps(v)
+            elif isinstance(v, bool):
+                v_serialized = int(v)
             else:
                 v_serialized = v
 
