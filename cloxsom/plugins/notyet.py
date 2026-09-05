@@ -1,6 +1,5 @@
 """Plugin to filter out unpublished articles."""
 
-from pathlib import Path
 from cloxsom.plugin.plugin import Plugin
 
 
@@ -8,7 +7,9 @@ class NotYetPlugin(Plugin):
     """Marks articles as unpublished if they have a .notyet file.
 
     Modifies existing ArticleSkrap products in place, setting their
-    'published' metadata to False if a corresponding .notyet file exists.
+    'published' metadata to False if scanfiles saw a .notyet marker for
+    the corresponding file. Reads FileSkrap.meta['has_notyet'] rather
+    than stat'ing the filesystem itself - only scanfiles does that.
     """
 
     @classmethod
@@ -24,22 +25,19 @@ class NotYetPlugin(Plugin):
         return []  # Modifies articles in place, doesn't create new products
 
     def run(self):
-        """Check for .notyet files and mark articles as unpublished."""
+        """Check FileSkrap.meta['has_notyet'] and mark articles as unpublished."""
         articles = self.db.find_all_skrap_by_type("article")
 
         marked_unpublished = 0
         for article in articles:
-            # Check if .notyet file exists
-            path = Path(article.meta['path'])
-            notyet_path = path.parent / (path.name + '.notyet')
+            file_skrap = self.db.find_skrap_by_name("scanfiles", article.name)
+            has_notyet = bool(file_skrap and file_skrap.meta.get('has_notyet'))
 
-            if notyet_path.exists():
-                article.meta['published'] = False
-                self.db.save_skrap(article)
-                marked_unpublished += 1
-            elif 'published' not in article.meta:
+            if has_notyet:
+                if self.update_skrap_meta(article, published=False):
+                    marked_unpublished += 1
+            else:
                 # Default to published if not specified
-                article.meta['published'] = True
-                self.db.save_skrap(article)
+                self.set_skrap_meta_defaults(article, published=True)
 
         return marked_unpublished
