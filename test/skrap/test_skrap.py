@@ -1,7 +1,7 @@
 
 import cloxsom
 
-test_type = "test type"
+test_type = "test"
 
 def test_create_bare_skrap():
     skrap = cloxsom.skrap.TestSkrap("test item", "tests")
