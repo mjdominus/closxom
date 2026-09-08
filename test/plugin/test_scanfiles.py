@@ -15,6 +15,16 @@ def articles_dir(tmp_path):
     return d
 
 
+def test_scanfiles_captures_file_content(skrapdb, articles_dir):
+    (articles_dir / "foo.blog").write_text("the body text")
+
+    ScanFilesPlugin(skrapdb, {'input_dir': str(articles_dir)}).run()
+
+    files = skrapdb.find_all_skrap_by_type("file")
+    assert len(files) == 1
+    assert files[0].content == "the body text"
+
+
 def test_scanfiles_rerun_updates_changed_file(skrapdb, articles_dir):
     article_path = articles_dir / "foo.blog"
     article_path.write_text("original content")
@@ -38,6 +48,7 @@ def test_scanfiles_rerun_updates_changed_file(skrapdb, articles_dir):
     files = skrapdb.find_all_skrap_by_type("file")
     assert len(files) == 1
     assert files[0].meta['file_mtime'] == new_mtime
+    assert files[0].content == "updated content"
 
 
 def test_scanfiles_skips_unchanged_file(skrapdb, articles_dir):

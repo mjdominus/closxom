@@ -1,14 +1,14 @@
-"""Plugin to read file contents and create ArticleSkrap products."""
+"""Plugin to copy file contents into ArticleSkrap products."""
 
-from pathlib import Path
 from cloxsom.plugin.plugin import Plugin
 
 
 class ReadFilesPlugin(Plugin):
-    """Reads file contents and creates ArticleSkrap products.
+    """Copies FileSkrap content into ArticleSkrap products.
 
-    Consumes FileSkrap products and produces ArticleSkrap products with
-    the raw file content loaded.
+    Consumes FileSkrap products, whose content scanfiles has already
+    loaded, and produces one ArticleSkrap per file holding a pristine
+    copy of that content. Does not touch the filesystem.
     """
 
     @classmethod
@@ -32,37 +32,28 @@ class ReadFilesPlugin(Plugin):
 
     def build_target(self, target):
         file_skrap = self.db.find_skrap_by_name("scanfiles", target)
-        path = Path(file_skrap.meta['path'])
-
-        if not path.exists():
-            self.log.warning("File not found: %s", path)
+        if file_skrap is None:
+            self.log.warning("No file skrap for target %r", target)
             return
 
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                new_content = f.read()
-        except OSError as e:
-            self.log.warning("Could not read %s: %s", path, e)
+        if file_skrap.content is None:
+            self.log.warning("File skrap %r has no content; skipping", target)
             return
-
-        # A newer FileSkrap.last_updated (what triggered this build_target
-        # call) doesn't mean the file's content actually changed - e.g. a
-        # benign mtime touch, or scanfiles resaving unconditionally. Only
-        # touch the article (and so only bump its last_updated) if the
-        # content actually differs, otherwise leave it and everything
-        # downstream (process_meta, etc.) already did to it alone.
-        if file_skrap.content == new_content:
-            self.log.info("Skipping target %r: content unchanged", target)
-            return
-
-        file_skrap.content = new_content
-        self.db.save_skrap(file_skrap)
 
         article = self.db.find_or_create_skrap("article", target, self.name())
-        article.meta.update({
-            'path': file_skrap.meta['path'],
-            'relpath': file_skrap.meta['relpath'],
-            'file_mtime': file_skrap.meta['file_mtime']
-        })
-        article.content = new_content
+
+        wanted_meta = {
+            k: file_skrap.meta[k]
+            for k in ("path", "relpath", "file_mtime")
+            if k in file_skrap.meta
+        }
+
+        if (article.id is not None
+                and article.content == file_skrap.content
+                and all(article.meta.get(k) == v for k, v in wanted_meta.items())):
+            self.log.info("Skipping target %r: article already current", target)
+            return
+
+        article.content = file_skrap.content
+        article.meta.update(wanted_meta)
         self.db.save_skrap(article)

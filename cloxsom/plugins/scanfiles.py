@@ -72,6 +72,13 @@ class ScanFilesPlugin(Plugin):
 
             self.log.info("Found new file %r" if is_new else "File %r changed", str(relpath))
 
+            try:
+                content = path.read_text(encoding='utf-8')
+            except OSError as e:
+                self.log.warning("Could not read %s: %s", path, e)
+                continue
+
+            file_skrap.content = content
             file_skrap.meta.update({
                 'path': str(path.absolute()),
                 'relpath': str(relpath),
