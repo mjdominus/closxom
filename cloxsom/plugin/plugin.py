@@ -49,16 +49,16 @@ class Plugin():
         self.config = config or {}
         self.log = logging.getLogger(f"cloxsom.plugin.{self.name()}")
 
-    def default_target_list(self):
+    def default_target_list(self) -> list:
         """Return the list of target names to build when run() is called
         without an explicit target_list."""
         raise UnimplementedMethod(f"Plugin {self.__class__} must implement default_target_list()")
 
-    def dependencies_of(self, target):
+    def dependencies_of(self, target) -> list:
         """Return the list of skraps that the given target depends on."""
         raise UnimplementedMethod(f"Plugin {self.__class__} must implement dependencies_of()")
 
-    def build_target(self, target):
+    def build_target(self, target) -> None:
         """Build (and save) the given target."""
         raise UnimplementedMethod(f"Plugin {self.__class__} must implement build_target()")
 
