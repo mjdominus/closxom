@@ -1,68 +1,100 @@
 # TODO
 
-## Milestones
+Action items for Closxom. Design rationale for the redesign items is in
+`notes/redesign-decisions.md`. Small deferred items and still-open questions are
+tracked as `lt` threads.
 
-- `run-plugin` CLI tool (done): loads a single named plugin by name and calls its `run()`
-  method, bypassing the full `genblog` pipeline/orchestrator. `run-plugin plugin-name args...
-  --input DIR --db FILE` — trailing args accepted but ignored for now; will be passed to
-  `run()` once plugins take arguments.
-- Test suite: planned, shape not yet decided.
+## Redesign: publication + b2c
 
-## Architecture
+- [ ] Timezone plumbing
+  - [ ] required `timezone` key in `config` (IANA name); `genblog` and `b2c`
+        fail at startup if it is missing or not constructible as
+        `zoneinfo.ZoneInfo`
+  - [ ] helper to parse the three `published:` forms (date-only, zoneless
+        datetime, offset-bearing) into a UTC instant
+- [ ] `now` / build-time plumbing
+  - [ ] `PluginOrchestrator` records one frozen instant at start
+  - [ ] pass it to plugins via `Plugin.__init__(..., now=None)`, not via `config`
+  - [ ] `--time` override on `genblog` and `run-plugin`; default is wall-clock
+  - [ ] record the chosen build time in a DB build-metadata row
+- [ ] Split publication state into `pubdate` (UTC ISO-8601, or absent) and
+      `published` (0/1, recomputed each build)
+- [ ] Rework `process_meta`
+  - [ ] split the META block from the body; write the body to a separate `body`
+        field and leave `content` pristine
+  - [ ] expose the raw `published:` string; no date parsing here
+  - [ ] hard-reject a META section with no `title:`
+  - [ ] reconcile only the meta keys it authored (mechanism: `lt` y28ws8)
+  - [ ] stop resaving every article every run
+- [ ] `fail_article(article, message)` base-class helper: log, set
+      `published=0`, append to an end-of-run failure report; build exits nonzero
+      if any article failed
+- [ ] Publication-resolver plugin (what `compute_dates` becomes)
+  - [ ] parse and validate the raw `published:` string via the timezone helper
+  - [ ] emit `pubdate`; on a malformed value raise, caught per-article
+  - [ ] set `published` from `pubdate <= now`
+  - [ ] must run after `process_meta` (needs an explicit ordering mechanism)
+- [ ] Delete `notyet` (same commit as the resolver): the plugin,
+      `test/plugin/test_notyet.py`, `test_scanfiles_detects_notyet_marker`,
+      orchestrator/`genblog` registration, `has_notyet` recording in `scanfiles`
+- [ ] `scanfiles`: tighten the walk to `*.blog`; warn on any stray `.notyet`
+- [ ] Write `b2c` (Blosxom -> Closxom converter)
+  - [ ] read `/workspace/blosxom-articles`; write a fresh Closxom tree
+  - [ ] normalize every article to a META section (`title:` from the first line
+        when absent; the second line must be blank, else warn)
+  - [ ] `.blog` + empty `.notyet` -> no `published:`; drop the `.notyet`
+  - [ ] `.notyet` with content and no `.blog` -> use it as the source, no
+        `published:`, no cache lookup
+  - [ ] `.blog` with an explicit `published:` -> rewrite as Eastern-local
+        ISO-8601 with an offset
+  - [ ] `.blog` with no `published:` and no `.notyet` -> cache lookup by path,
+        hard-fail on a miss, write Eastern-local ISO-8601 with an offset
+  - [ ] strip `published: 0` entirely
+  - [ ] ignore everything but `*.blog` / `*.notyet`
+  - [ ] fail late: accumulate all offenders, print the list, exit nonzero
 
-- Design and document improved plugin API
-- New plugin protocol to replace unconditional full-regen `run()`: each plugin implements
-  `default_target_list()`, `dependencies_of(target)`, `build_target(target)`, with generic
-  `run(targets=None)` / `need_to_rebuild(target, deps)` on the base `Plugin` class —
-  enables incremental rebuilds and partial CLI invocation (e.g. rebuild just one year's archive)
-- Layering rule: a plugin's `need_to_rebuild` may only compare against its declared
-  dependency skraps (`inputs()`), never reach past them to raw external state
-  (e.g. only `scanfiles` may stat the filesystem directly)
-- Dependency tracking: considering a `skrap_deps` junction table (`skrap_id`,
-  `depends_on_skrap_id`) to record producer → dependency edges explicitly
-- Deletion handling: leaning toward tombstoning (mark-deleted flag, not row deletion)
-  so dependency FKs never dangle and removal of an input propagates as staleness;
-  still open how plugins detect an empty dependency set and how `write_html` removes
-  files for tombstoned pages
-- Skrap metadata values should carry a type, defaulting to `string` but also supporting
-  things like `pathlib.Path` or `int` — similar in spirit to argparse's `type=` parameter
-- Once metadata typing (above) exists, redo path-manipulation code that currently treats
-  paths as plain strings to use `pathlib.Path` methods instead. E.g.
-  `build_article_pages.py:41` does `relpath.rsplit('.', 1)[0] + '.html'`; once `relpath` is
-  a typed `Path`, this should be `relpath.with_suffix('.html')`
-- `run-plugin` should discover available plugins at run time instead of importing a
-  hardcoded list (`PLUGINS` dict in `run-plugin` currently lists each plugin class by hand)
-- `ArticleSkrap.is_published()` does `self.meta['published']`, which raises a raw `KeyError`
-  if an article skrap is missing the `published` key (this is intentional — every
-  `ArticleSkrap` should have one). At some point add a proper handler for this case (and
-  presumably other required-but-missing metadata keys) instead of letting the bare
-  `KeyError` propagate
-- Need to handle articles that have an explicit publication date in their META section.
-  Not yet clear how responsibility for this should be divided between `process_meta`
-  (which parses META) and `notyet` (which currently decides published/unpublished status)
-- (Low priority — very late, if at all) `genblog` could have a config file giving explicit
-  plugin dependency information, as lines of the form `A B -> C D` meaning plugins A and B
-  must run before C and D. `genblog` would topologically sort these lines to decide which
-  plugins to run and in what order
+## Plugin API conversion
 
-## Unimplemented features
+Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 
-- Markdown rendering — `write_html.py` currently just HTML-escapes raw content;
-  Markdown syntax is never converted. Decided: use `mistune` (speed, active
-  maintenance, closer CommonMark compliance) — not yet wired into the pipeline
-- RSS/Atom feed generation
-- Templating engine for HTML output (currently hardcoded strings in `write_html.py`)
-- Asset handling (images, CSS, JS in the articles directory are ignored)
-- Incremental rebuilds (see architecture section above — depends on the new plugin protocol)
+- [x] `readfiles`
+- [ ] `process_meta`
+- [ ] `compute_dates` / publication-resolver
+- [ ] `build_article_pages`
+- [ ] `build_date_archives`
+- [ ] `build_topic_archives`
+- [ ] `build_main_page`
+- [ ] `write_html`
+- `scanfiles` is intentionally exempt (filesystem boundary; overrides `run()`).
 
-## Known bugs
+## Incremental rebuild
 
-- `cloxsom/article.py` is dead code from the pre-draft era — buggy, unused; delete
-  or rewrite as a plugin
-- `build_topic_archives` can double-count articles with overlapping tag fields
-  (`tags`, `topic`, `category`)
-- `process_meta` unconditionally resaves every article on every run (unlike
-  `compute_dates`, which correctly checks before saving, and `readfiles`,
-  which now does too) — blocks the incremental-rebuild work above, since one
-  holdout plugin touching `last_updated` reopens false-staleness cascades for
-  everything downstream
+- [ ] `skrap_deps` junction table (`skrap_id`, `depends_on_skrap_id`) recording
+      explicit producer -> dependency edges
+- [ ] deletion / tombstoning: mark-deleted flag, staleness propagation,
+      `write_html` removing files for tombstoned pages (`lt` yhhrg5)
+- [ ] explicit plugin-ordering config (`A B -> C D`, topologically sorted)
+- [ ] treat the wall-clock dependency of `published` as a staleness input
+      (`lt` vbstr7)
+
+## Metadata typing
+
+- [ ] typed meta values (default `string`; also `pathlib.Path`, `int`, ...)
+- [ ] then: `build_article_pages.py:41` `relpath.rsplit('.', 1)[0] + '.html'`
+      -> `relpath.with_suffix('.html')`
+
+## Features
+
+- [ ] Markdown rendering via `mistune`
+- [ ] RSS/Atom feed generation
+- [ ] templating engine (replace the hardcoded HTML strings in `write_html.py`)
+- [ ] asset handling (images, CSS, JS)
+
+## Bugs / cleanup
+
+- [ ] delete or rewrite dead `cloxsom/article.py`
+- [ ] `build_topic_archives` double-counts articles with overlapping
+      `tags` / `topic` / `category`
+- [ ] `run-plugin`: discover plugins at runtime instead of the hardcoded
+      `PLUGINS` dict
+- [ ] rename the package `cloxsom` -> `closxom` (`lt` 46cvdv; also `CLAUDE.md`)

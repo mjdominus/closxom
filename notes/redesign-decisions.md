@@ -1,127 +1,120 @@
-# Redesign decisions (in progress)
+# Redesign decisions
 
-Running record of decisions from the plugin-API / publication-logic redesign
-discussion. Not yet reflected in code except where noted "done".
+Settled design decisions for the plugin-API and publication-logic redesign, with
+rationale. This file is a reference, not a task list — action items are in
+`../TODO.md`. Still-open questions are listed at the end and tracked as `lt`
+threads.
 
-## Committed so far this cycle
+## Implemented so far
 
 - `a94bef4` — removed obsolete `test_plugin_trivial.py`; fixed skrap type in `test_skrap.py`
-- `50e949c` — meta storage changes + `Plugin` meta helpers (see "Meta storage")
-- `394fc48` — `notyet` reads `has_notyet` from `FileSkrap.meta` instead of stat'ing the FS
+- `50e949c` — meta storage changes + `Plugin` meta helpers
+- `394fc48` — `notyet` reads `has_notyet` from `FileSkrap.meta` (transitional; `notyet` is to be deleted)
+- `4f3cc25` — `scanfiles` loads file content onto the `FileSkrap`; `readfiles` rewritten as a pure copy
+- `2ba6393` — return annotations on the abstract `Plugin` methods to quiet basedpyright
 
-`394fc48` is transitional: the `notyet` plugin is slated for deletion (see
-"Publication model"). The meta-storage work stays.
+## Meta storage
 
-## Meta storage (done)
+- `save_skrap_metadata` JSON-encodes compound values only (`dict` / `list`) and
+  coerces `bool` to 0/1, since SQLite has no boolean type.
+- `_load_metadata` attempts `json.loads` only on strings starting with `[` or
+  `{`; every other scalar passes through verbatim, so a scalar string like
+  `"123"` or `"null"` is not silently reinterpreted.
+- `Plugin.update_skrap_meta(skrap, **kwargs)` assigns keys and saves once, only
+  if a value actually changed; bools are normalized to 0/1; it returns whether a
+  save happened.
+- `Plugin.set_skrap_meta_defaults(skrap, **kwargs)` has `dict.setdefault`
+  semantics — fills only absent keys, saves only if a key was added.
 
-- `save_skrap_metadata`: JSON-encode compound values only (`dict`/`list`); coerce
-  `bool` -> 0/1 (SQLite has no boolean type).
-- `_load_metadata`: attempt `json.loads` only on strings starting with `[` or `{`;
-  all other scalars pass through verbatim (a scalar string like `"123"` or
-  `"null"` is no longer silently reinterpreted).
-- `Plugin.update_skrap_meta(skrap, **kwargs)`: assign keys, save once iff a value
-  actually changed; bools normalized to 0/1; returns whether a save happened.
-- `Plugin.set_skrap_meta_defaults(skrap, **kwargs)`: `dict.setdefault` semantics —
-  only fills absent keys, saves iff a key was added.
+## Article content: scanfiles, readfiles, pristine content
 
-## scanfiles / readfiles
-
-- `scanfiles` remains the *only* filesystem-boundary plugin.
-- `scanfiles` on an mtime change now also **reads the file content** and stores it
-  on the `FileSkrap`.
-- `scanfiles` directory walk tightened to `*.blog` only (currently `rglob("*")` +
-  filters). Drops `has_notyet` recording. Warns if it ever encounters a `.notyet`
-  after cutover.
-- `readfiles` stays a separate, conventional plugin. Its job: copy
-  `FileSkrap.content` -> `ArticleSkrap.content`, establishing the pristine
-  known-good starting state.
-- `ArticleSkrap.content` stays pristine. Plugins that derive things write
-  **separate fields** (e.g. `process_meta` writes meta keys plus a separate
-  stripped `body`), never mutate `content` in place — for idempotency and to
-  remove inter-plugin ordering fragility.
-- TODO: `readfiles` needs more tests (new-article creation, content-unchanged =>
-  no resave, missing file).
+- `scanfiles` is the only filesystem-boundary plugin. It reads file content on a
+  new or changed file and stores it on the `FileSkrap`. Its walk is `*.blog`
+  only.
+- `readfiles` is a conventional plugin that copies `FileSkrap.content` ->
+  `ArticleSkrap.content`, establishing a pristine known-good starting state. It
+  does not touch the filesystem.
+- `ArticleSkrap.content` stays pristine for the life of the pipeline. A plugin
+  that derives something from it writes a **separate field** (e.g. `process_meta`
+  writes a `body` field with the META block removed) rather than mutating
+  `content` in place. This keeps every plugin's input stable, makes re-runs
+  idempotent, and removes inter-plugin ordering fragility.
 
 ## Meta key provenance
 
-- A plugin reconciles (adds **and** removes) only the keys it authored. It never
-  needs a list of "system" keys — it simply doesn't touch what it didn't write.
-- The `$`-prefix "special key" convention was rejected: it can't express
-  dual-source keys.
-- OPEN: storage mechanism for `process_meta`'s non-interpreted META keys — its own
-  skrap replaced wholesale, vs. a tracked key-set. Framing agreed; mechanism not
-  finalized.
+- A plugin reconciles — adds *and* removes — only the meta keys it authored. It
+  never needs a list of "system" keys; it simply does not touch what it did not
+  write. So a key an author deletes from a file's META section on a later edit
+  also disappears from `article.meta`, while `path` / `relpath` / etc. are left
+  alone.
+- The `$`-prefix "special key" convention was rejected: a single special/ordinary
+  bit cannot express a key that legitimately has more than one possible source.
 
 ## Publication model
 
-Split the old `published` field into two:
+Publication state is two fields:
 
-- `pubdate` — an instant, stored as a UTC ISO-8601 string (see "Timezone
-  semantics"), or absent.
-- `published` — a boolean, recomputed every build.
+- `pubdate` — an instant, stored as a UTC ISO-8601 string, or absent.
+- `published` — 0 or 1, recomputed every build.
 
-| META `published:`                | `pubdate`     | `published` |
-|----------------------------------|---------------|-------------|
-| absent                           | absent / None | 0           |
-| a date/datetime in the future    | that instant  | 0           |
-| a date/datetime at or before now | that instant  | 1           |
+| `published:` in META                | `pubdate`     | `published` |
+|-------------------------------------|---------------|-------------|
+| absent                              | absent / None | 0           |
+| a date/datetime in the future       | that instant  | 0           |
+| a date/datetime at or before `now`  | that instant  | 1           |
 
-- Absent `pubdate` means *unconditionally* unpublished. A future `pubdate` is
-  stored but `published` stays 0 until the clock passes it.
-- The date **cache is eliminated**. `.notyet` files are **eliminated**. The
-  `notyet` plugin is **deleted** — along with `test/plugin/test_notyet.py`,
-  `test_scanfiles_detects_notyet_marker`, its orchestrator/`genblog`
-  registration, and the `has_notyet` meta key.
-- All `build_*` plugins already pull `db.find_all_published_articles()`, so
-  `published=0` suppresses an article everywhere, including its own page.
+- Absent `pubdate` is *unconditionally* unpublished. A future `pubdate` is stored
+  but `published` stays 0 until the build clock passes it.
+- The old article-date **cache is eliminated**. `.notyet` files are
+  **eliminated** (`b2c` converts them). The `notyet` plugin is **deleted**.
+- Every `build_*` plugin already pulls `db.find_all_published_articles()`, so
+  `published = 0` suppresses an article everywhere, including its own page.
 
-## Blosxom -> Closxom converter (`b2c`)
+Rationale: the historical logic conflated a boolean with a date and split
+responsibility for it across `process_meta`, `notyet`, and a sticky mtime cache.
+Two fields and one decision table replace all of that.
 
-- The converter is named **`b2c`**.
-- The input is a copy of the current Blosxom article tree at
-  `/workspace/blosxom-articles` — a gitignored subdirectory that is its own
-  separate git repository, not part of the Closxom repo.
-- The Blosxom tree stays **read-only** until cutover (its code is too unreliable
-  to modify in place). `b2c` reads it and writes a fresh Closxom tree, run
-  repeatedly during development (diff output against the live blog), with a final
-  run at cutover; the old tree is then abandoned and `b2c` retired.
-- Single program until it proves too large.
-- The Closxom tree is a generated build product, **not hand-edited**, until
-  cutover; then the converter is retired and the tree becomes canonical.
-- **No Closxom plugin ever writes a `.blog` file.** Date-format rewriting happens
-  only in the converter; `process_meta` normalizes internally only.
+## Blosxom -> Closxom conversion (`b2c`)
+
+- The converter is named `b2c`. Its input is a copy of the current Blosxom
+  article tree at `/workspace/blosxom-articles` — a gitignored subdirectory that
+  is its own separate git repository, not part of the Closxom repo.
+- The Blosxom tree stays read-only until cutover; its own code is too unreliable
+  to modify in place. `b2c` reads it and writes a fresh Closxom tree, run
+  repeatedly during development (diffing output against the live blog), with a
+  final run at cutover. Afterwards the old tree is abandoned and `b2c` retired.
+- Until cutover the Closxom tree is a generated build product, never hand-edited.
+  At cutover it becomes canonical.
+- No Closxom plugin ever writes a `.blog` file. Date-format rewriting happens
+  only in `b2c`.
 - Per source file:
-  - a `.blog` with an (empty) `.notyet` sibling -> draft: converted article has
-    no `published:` line, content from the `.blog`; drop the `.notyet`
-  - a `.notyet` with content and **no corresponding `.blog`** -> the `.notyet`
-    file *is* the article source (an unpublished draft whose body was never
-    promoted to a `.blog`): convert it like any article, no `published:` line, and
-    **no cache lookup** (a draft is not expected to be in the cache)
-  - a `.blog` with an explicit `published:` -> keep the instant, rewrite it to
+  - a `.blog` with an empty `.notyet` sibling -> draft: no `published:` line,
+    content from the `.blog`; the `.notyet` is dropped
+  - a `.notyet` with content and no corresponding `.blog` -> the `.notyet` file
+    is the article source (a draft whose body was never promoted to a `.blog`):
+    convert it like any article, no `published:` line, no cache lookup
+  - a `.blog` with an explicit `published:` -> keep the instant, rewrite it as
     Eastern-local ISO-8601 with an explicit offset (`2006-02-03T12:34:56-05:00`)
   - a `.blog` with no `published:` and no `.notyet` -> look up the date in the
-    cache by path (**hard-fail on a cache miss**), render the epoch to
-    Eastern-local ISO-8601 with an explicit offset, write that as the
-    `published:` value
+    cache by path (hard-fail on a miss), render the epoch as Eastern-local
+    ISO-8601 with an explicit offset
 - Cache file format: `<epoch> <abspath>` lines, all sharing the prefix
-  `/home/mjd/misc/blog/entries/`. Strip it, match on the relative path.
-- Converter **fails late**: full pass, accumulate every offender (cache miss,
-  malformed input, ...), print the list, exit nonzero.
-- Converter strips `published: 0` entirely — absent is the canonical form for
-  "unpublished".
-- Only `*.blog` and `*.notyet` files are relevant. Everything else in the tree is
-  ignored completely (Blosxom template-expansion files will live elsewhere in
-  Closxom).
+  `/home/mjd/misc/blog/entries/`; strip it and match on the relative path.
+- `b2c` fails late: one full pass, accumulate every offender (cache miss,
+  malformed input), print the list, exit nonzero.
+- `published: 0` is stripped entirely; absent is the canonical "unpublished"
+  form.
+- Only `*.blog` and `*.notyet` files matter; everything else is ignored (Blosxom
+  template-expansion files live elsewhere in Closxom).
 - Articles are never renamed (URL stability). A future plugin will handle renames
   by writing a redirect page at the old path.
 
 ### Articles with no META section
 
-- The converter **normalizes every article to have a META section**. The no-META
-  form does not survive into the Closxom tree.
-- For a source article with no META section: the **title is the first line**, the
-  **second line must be blank** (warn if it isn't), and the body is the remaining
-  lines. The converter synthesizes:
+- `b2c` normalizes every article to have a META section; the no-META form does
+  not survive into the Closxom tree.
+- For a source file with no META section, the title is the first line, the second
+  line must be blank (warn otherwise), and the body is the rest:
 
   ```
   META
@@ -131,76 +124,84 @@ Split the old `published` field into two:
   <body: line 3 onward>
   ```
 
-- `process_meta`'s no-META branch (first line as title) is therefore **obsolete
-  and is removed** — it predates the decision to convert all article files.
+## `process_meta`
 
-## process_meta (going forward)
+- `process_meta` is a mechanical META-block handler. It splits the META headers
+  from the body, writes the body to a separate `body` field (leaving `content`
+  pristine), and populates `article.meta` from the headers.
+- It does **not** parse or validate `published:` — it exposes the raw string and
+  the publication resolver does everything date-related. This keeps `zoneinfo`
+  and date-format concerns out of `process_meta`.
+- A META section with no `title:` is a hard rejection; titles are required,
+  matching the current software. (There is no longer a no-META branch — every
+  article has a META section after `b2c`.)
+- It reconciles only the meta keys it authored (see Meta key provenance).
 
-- Accepts exactly these forms for `published:` (no unix timestamps, no `/`
-  separators):
-  - `YYYY-MM-DD` — interpreted as **noon in the config zone**
-  - zoneless `YYYY-MM-DDThh:mm:ss` — that wall time in the config zone
-  - offset-bearing `YYYY-MM-DDThh:mm:ss±hh:mm` (or `...Z`) — taken as-is
-  - absent
-- All forms normalize to one instant, stored as `pubdate` in UTC ISO-8601
-  (see "Timezone semantics"). Parses and validates the field; emits `pubdate`
-  or nothing.
-- A META section with **no `title:` is a hard rejection** — titles are required,
-  matching the current software.
-- The no-META branch (first line as title) is **removed** — post-conversion every
-  article has a META section.
-- On a malformed `published:` value, `process_meta` raises. The exception is
-  caught in the plugin's **own per-article loop** (not the orchestrator, which
-  does not iterate articles). The article gets `published=0`, a diagnostic, and an
-  entry in an end-of-run failure report.
-- Standardize this via a base-class helper, e.g. `self.fail_article(article,
-  message)`.
-- A build that skipped one or more broken articles exits nonzero with a summary.
+## Publication resolver (formerly `compute_dates`)
 
-## compute_dates (going forward)
+- `compute_dates` is rewritten into the one plugin that owns all publication
+  logic. The mtime fallback, unix-timestamp parsing, the `%Y/%m/%d` format, and
+  the `date` key are all dropped.
+- It parses and validates the raw `published:` string via the timezone helper,
+  emits `pubdate` (UTC ISO-8601) or nothing, and sets `published` from
+  `pubdate <= now`. Comparison is on parsed datetimes, not raw strings.
+- On a malformed `published:` value it raises; the exception is caught in the
+  plugin's own per-article loop (the orchestrator does not iterate articles). The
+  article gets `published = 0`, a diagnostic, and an entry in an end-of-run
+  failure report; a build that skipped any article exits nonzero.
+- It must run after `process_meta`. Both have `inputs = ["article"]`,
+  `outputs = []`, so the orchestrator's inputs/outputs topological sort will not
+  order them — an explicit ordering mechanism is needed.
 
-- Near-total rewrite. Drops the mtime fallback, unix-timestamp parsing, the
-  `%Y/%m/%d` format, and the `date` key.
-- New job: read `pubdate`, compare it to `now` (both UTC), set `published`. The
-  only step that touches the clock. Comparison is on parsed datetimes, not raw
-  strings.
-- OPEN: keep the name, or rename to `resolve-publication`.
+## `now` / build time
 
-## `now` plumbing
-
-- A single frozen instant, recorded by `PluginOrchestrator` at start — not a
-  callable (determinism).
-- Passed to plugins via `Plugin.__init__(self, db, config=None, now=None)` or an
-  orchestrator-set attribute — **not** through `config`.
-- `genblog` and `run-plugin` get a `--time` override; default is wall-clock. A
-  zoneless `--time` is interpreted in the config zone (a date-only `--time` is
-  noon in the config zone); stored/compared as UTC.
-- Recorded in a DB build-metadata row. Name it `build_time` / `as_of`.
+- `PluginOrchestrator` records one frozen instant at start — a value, not a
+  callable, so a build is deterministic and reproducible.
+- It reaches plugins through `Plugin.__init__(self, db, config=None, now=None)`
+  or an orchestrator-set attribute, not through `config` (which holds
+  entry-point settings, not orchestrator-generated state).
+- `genblog` and `run-plugin` take a `--time` override; the default is
+  wall-clock. A zoneless `--time` is interpreted in the config zone (a date-only
+  `--time` is noon there); it is stored and compared as UTC.
+- The chosen build time is recorded in a DB build-metadata row. Working name:
+  `build_time` / `as_of`.
 
 ## Timezone semantics
 
-- The config zone (an IANA name, e.g. `America/New_York`) is a **required** key in
-  `config`. No default — `genblog` and the converter both fail loudly if it is
-  missing. Validated at startup by constructing `zoneinfo.ZoneInfo(name)`.
-- One blog-wide zone; no per-article override.
-- Zoneless values in `published:` are interpreted in the config zone. A
-  date-only value is **noon** in that zone (not midnight — noon is never near a
-  DST transition and has ~12h of slack before any conversion crosses a calendar
-  day).
-- `published:` may carry an explicit offset; it is honored as an instant. The
-  post still has a single publication date driving everything, rendered in the
-  config zone for output (an article given a Seoul-morning `published:` can show
-  a previous-evening Eastern date on the generated pages — acceptable).
-- **Stored dates are UTC**, ISO-8601, in the form `datetime.isoformat()` emits
+- The config zone (an IANA name, e.g. `America/New_York`) is a required key in
+  `config`. There is no default: `genblog` and `b2c` fail at startup if it is
+  missing or not constructible as `zoneinfo.ZoneInfo`. One blog-wide zone; no
+  per-article override.
+- `published:` accepts exactly: `YYYY-MM-DD` (noon in the config zone), a
+  zoneless `YYYY-MM-DDThh:mm:ss` (that wall time in the config zone), or an
+  offset-bearing datetime / `...Z` (taken as the instant it names). No unix
+  timestamps, no `/` separators.
+- Date-only values are noon, not midnight: noon is never near a DST transition
+  and has ~12 h of slack before any zone conversion could cross a calendar day,
+  so `YYYY-MM-DD` always names a real, unambiguous instant that stays in the
+  right archive month.
+- An explicit offset is honored as an instant. The post still has one publication
+  date driving everything, rendered in the config zone for output — an article
+  given a Seoul-morning `published:` may show a previous-evening Eastern date on
+  the generated pages, which is acceptable.
+- Stored dates are UTC ISO-8601 in the form `datetime.isoformat()` emits
   (`2027-05-31T20:00:00+00:00`). Applies to `pubdate` and `build_time`.
-- The **converter** writes `published:` into the `.blog` files as Eastern-local
-  ISO-8601 **with an explicit offset** — readable as local time, but the instant
-  is pinned exactly and independently of the config value.
-- Consumers that order by date (e.g. `build_main_page`, which currently builds
-  `(meta['date'], id)` tuples and sorts them — fine while `date` is a float)
-  must parse the ISO string to a `datetime` before comparing/sorting.
+- `b2c` writes `published:` into the `.blog` files as Eastern-local ISO-8601
+  **with an explicit offset** — readable as local time, but the instant is pinned
+  exactly and independently of the config value.
+- Consumers that order by date (e.g. `build_main_page`) must parse the ISO string
+  to a `datetime` before comparing or sorting.
 
-## Deferred
+## Open questions
 
-- The wall-clock dependency of `published` (a future-dated post flips with no file
-  change) as an input to incremental-rebuild staleness — noted, not blocking.
+- **Provenance storage mechanism** for `process_meta`'s authored keys — its own
+  skrap replaced wholesale, vs. a tracked key-set. Framing agreed, mechanism
+  not chosen. (`lt` y28ws8)
+- **Publication-resolver plugin name** — keep `compute_dates` or rename to
+  `resolve-publication`. (`lt` jwnuu5)
+- **`published` recompute vs. incremental-rebuild staleness** — a future-dated
+  post flips with no file change; `build_time` must be a staleness input for
+  anything gated on `published`. (`lt` vbstr7)
+- **Article-file deletion handling** — tombstoning direction agreed; detection of
+  an emptied dependency set and output-file removal still undecided.
+  (`lt` yhhrg5)
