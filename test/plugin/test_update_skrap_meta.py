@@ -1,4 +1,4 @@
-from closxom.plugin.plugin import Plugin
+from closxom.plugin.base import Plugin
 from closxom.skrap import FileSkrap
 
 

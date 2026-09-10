@@ -1,4 +1,4 @@
-from closxom.plugins.readfiles import ReadFilesPlugin
+from closxom.plugin.readfiles import ReadFilesPlugin
 from closxom.skrap import FileSkrap
 
 

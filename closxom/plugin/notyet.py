@@ -1,6 +1,6 @@
 """Plugin to filter out unpublished articles."""
 
-from closxom.plugin.plugin import Plugin
+from closxom.plugin.base import Plugin
 
 
 class NotYetPlugin(Plugin):

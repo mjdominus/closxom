@@ -43,17 +43,17 @@ filesystem
 | `closxom/skrap.py` | `Skrap` base class + concrete types (`FileSkrap`, `ArticleSkrap`, `PageSkrap`, `TestSkrap`).  Includes a type registry (`register_skrap_type` / `get_skrap_class`). |
 | `closxom/db.py` | `DB` class — SQLite wrapper.  CRUD for skrap objects and metadata, plugin registration. Metadata values are JSON-serialised for complex types. |
 | `closxom/orchestrator.py` | `PluginOrchestrator` — builds dependency graph from plugin `inputs()`/`outputs()` declarations, topological-sorts, then calls `plugin.run()` in order. |
-| `closxom/plugin/plugin.py` | `Plugin` abstract base class.  Subclasses implement `name()`, `inputs()`, `outputs()`, `run()`.  Constructor takes `(db, config=None)`; `config` is a plain dict (`input_dir`, `output_dir`, `recent`, ...) passed through unchanged by the orchestrator / `run-plugin` — most plugins ignore it, a few read specific keys. |
-| `closxom/plugins/scanfiles.py` | Walks `articles/` directory, creates one `FileSkrap` per file. |
-| `closxom/plugins/readfiles.py` | Reads each `FileSkrap` file from disk, creates an `ArticleSkrap` with `original_content`. |
-| `closxom/plugins/notyet.py` | Marks articles unpublished if a matching `.notyet` file exists. |
-| `closxom/plugins/process_meta.py` | Strips and parses the `META` header block (Blosxom format).  Sets `title`, `tags`, etc. on the `ArticleSkrap`. |
-| `closxom/plugins/compute_dates.py` | Determines publication date from META field, path (`/YYYY/MM/DD/`), or file mtime. |
-| `closxom/plugins/build_article_pages.py` | Creates one `PageSkrap` per published article (`page_type=single`). |
-| `closxom/plugins/build_date_archives.py` | Creates year and month archive `PageSkrap` objects. |
-| `closxom/plugins/build_topic_archives.py` | Creates one `PageSkrap` per tag/topic. |
-| `closxom/plugins/build_main_page.py` | Creates the main-index `PageSkrap` with the N most recent articles. |
-| `closxom/plugins/write_html.py` | Reads all `PageSkrap` objects and writes HTML files to `output/`.  Templates are currently inline strings — they will become Jinja2 files |
+| `closxom/plugin/base.py` | `Plugin` abstract base class.  Subclasses implement `name()`, `inputs()`, `outputs()`, `run()`.  Constructor takes `(db, config=None)`; `config` is a plain dict (`input_dir`, `output_dir`, `recent`, ...) passed through unchanged by the orchestrator / `run-plugin` — most plugins ignore it, a few read specific keys. |
+| `closxom/plugin/scanfiles.py` | Walks `articles/` directory, creates one `FileSkrap` per file. |
+| `closxom/plugin/readfiles.py` | Reads each `FileSkrap` file from disk, creates an `ArticleSkrap` with `original_content`. |
+| `closxom/plugin/notyet.py` | Marks articles unpublished if a matching `.notyet` file exists. |
+| `closxom/plugin/process_meta.py` | Strips and parses the `META` header block (Blosxom format).  Sets `title`, `tags`, etc. on the `ArticleSkrap`. |
+| `closxom/plugin/compute_dates.py` | Determines publication date from META field, path (`/YYYY/MM/DD/`), or file mtime. |
+| `closxom/plugin/build_article_pages.py` | Creates one `PageSkrap` per published article (`page_type=single`). |
+| `closxom/plugin/build_date_archives.py` | Creates year and month archive `PageSkrap` objects. |
+| `closxom/plugin/build_topic_archives.py` | Creates one `PageSkrap` per tag/topic. |
+| `closxom/plugin/build_main_page.py` | Creates the main-index `PageSkrap` with the N most recent articles. |
+| `closxom/plugin/write_html.py` | Reads all `PageSkrap` objects and writes HTML files to `output/`.  Templates are currently inline strings — they will become Jinja2 files |
 | `closxom/meta.py` | Thin `Meta(dict)` subclass — not much here yet. |
 | `closxom/article.py` | Old draft `Article` class — buggy, predates the current skrap approach; not currently used. |
 | `closxom/context.py` | Intentionally stubbed `Context` class — abandoned in favour of direct DB queries. |

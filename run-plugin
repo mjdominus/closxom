@@ -8,16 +8,16 @@ import sys
 from closxom.db import DB
 from closxom import logconfig
 
-from closxom.plugins.scanfiles import ScanFilesPlugin
-from closxom.plugins.readfiles import ReadFilesPlugin
-from closxom.plugins.notyet import NotYetPlugin
-from closxom.plugins.process_meta import ProcessMetaPlugin
-from closxom.plugins.compute_dates import ComputeDatesPlugin
-from closxom.plugins.build_article_pages import BuildArticlePagesPlugin
-from closxom.plugins.build_date_archives import BuildDateArchivesPlugin
-from closxom.plugins.build_topic_archives import BuildTopicArchivesPlugin
-from closxom.plugins.build_main_page import BuildMainPagePlugin
-from closxom.plugins.write_html import WriteHtmlPlugin
+from closxom.plugin.scanfiles import ScanFilesPlugin
+from closxom.plugin.readfiles import ReadFilesPlugin
+from closxom.plugin.notyet import NotYetPlugin
+from closxom.plugin.process_meta import ProcessMetaPlugin
+from closxom.plugin.compute_dates import ComputeDatesPlugin
+from closxom.plugin.build_article_pages import BuildArticlePagesPlugin
+from closxom.plugin.build_date_archives import BuildDateArchivesPlugin
+from closxom.plugin.build_topic_archives import BuildTopicArchivesPlugin
+from closxom.plugin.build_main_page import BuildMainPagePlugin
+from closxom.plugin.write_html import WriteHtmlPlugin
 
 PLUGINS = {
     cls.name(): cls

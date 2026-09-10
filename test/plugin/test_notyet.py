@@ -1,4 +1,4 @@
-from closxom.plugins.notyet import NotYetPlugin
+from closxom.plugin.notyet import NotYetPlugin
 from closxom.skrap import ArticleSkrap, FileSkrap
 
 
