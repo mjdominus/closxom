@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-from cloxsom.db import DB
-from cloxsom.skrap import TestSkrap
+from closxom.db import DB
+from closxom.skrap import TestSkrap
 
 
 def main():

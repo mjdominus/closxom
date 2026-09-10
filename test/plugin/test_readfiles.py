@@ -1,5 +1,5 @@
-from cloxsom.plugins.readfiles import ReadFilesPlugin
-from cloxsom.skrap import FileSkrap
+from closxom.plugins.readfiles import ReadFilesPlugin
+from closxom.skrap import FileSkrap
 
 
 def _save_file_skrap(db, name="foo.blog", content="original", meta=None):

@@ -1,5 +1,5 @@
-from cloxsom.plugins.notyet import NotYetPlugin
-from cloxsom.skrap import ArticleSkrap, FileSkrap
+from closxom.plugins.notyet import NotYetPlugin
+from closxom.skrap import ArticleSkrap, FileSkrap
 
 
 def _make_file_and_article(db, name, has_notyet):

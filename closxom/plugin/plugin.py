@@ -47,7 +47,7 @@ class Plugin():
         """
         self.db = db
         self.config = config or {}
-        self.log = logging.getLogger(f"cloxsom.plugin.{self.name()}")
+        self.log = logging.getLogger(f"closxom.plugin.{self.name()}")
 
     def default_target_list(self) -> list:
         """Return the list of target names to build when run() is called

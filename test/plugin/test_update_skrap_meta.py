@@ -1,5 +1,5 @@
-from cloxsom.plugin.plugin import Plugin
-from cloxsom.skrap import FileSkrap
+from closxom.plugin.plugin import Plugin
+from closxom.skrap import FileSkrap
 
 
 class _P(Plugin):

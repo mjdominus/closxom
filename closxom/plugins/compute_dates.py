@@ -1,7 +1,7 @@
 """Plugin to compute publication dates for articles."""
 
 from datetime import datetime
-from cloxsom.plugin.plugin import Plugin
+from closxom.plugin.plugin import Plugin
 
 
 class ComputeDatesPlugin(Plugin):

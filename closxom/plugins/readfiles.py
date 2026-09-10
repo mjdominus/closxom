@@ -1,6 +1,6 @@
 """Plugin to copy file contents into ArticleSkrap products."""
 
-from cloxsom.plugin.plugin import Plugin
+from closxom.plugin.plugin import Plugin
 
 
 class ReadFilesPlugin(Plugin):

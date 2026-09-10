@@ -92,9 +92,8 @@ Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 
 ## Bugs / cleanup
 
-- [ ] delete or rewrite dead `cloxsom/article.py`
+- [ ] delete or rewrite dead `closxom/article.py`
 - [ ] `build_topic_archives` double-counts articles with overlapping
       `tags` / `topic` / `category`
 - [ ] `run-plugin`: discover plugins at runtime instead of the hardcoded
       `PLUGINS` dict
-- [ ] rename the package `cloxsom` -> `closxom` (`lt` 46cvdv; also `CLAUDE.md`)

@@ -1,8 +1,8 @@
 """Plugin to build topic/tag archive pages."""
 
 from collections import defaultdict
-from cloxsom.plugin.plugin import Plugin
-from cloxsom.skrap import PageSkrap
+from closxom.plugin.plugin import Plugin
+from closxom.skrap import PageSkrap
 
 
 class BuildTopicArchivesPlugin(Plugin):

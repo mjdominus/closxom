@@ -8,6 +8,5 @@ order to turn Markdown source articles into static HTML.
 See `ARCHITECTURE.md` for the full design and file map, and `TODO.md` for
 current architecture direction, unimplemented features, and known bugs.
 
-The package is named `cloxsom` throughout the code, matching the project name.
-This is an error.  It should be corrected to `closxom` everywhere.
+The package is named `closxom` throughout the code, matching the project name.
 

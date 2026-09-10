@@ -1,4 +1,4 @@
-from cloxsom.context import Context
+from closxom.context import Context
 import sys
 
 def test_null():

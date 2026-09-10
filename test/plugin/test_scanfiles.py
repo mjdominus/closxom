@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from cloxsom.plugins.scanfiles import ScanFilesPlugin
+from closxom.plugins.scanfiles import ScanFilesPlugin
 
 
 @pytest.fixture

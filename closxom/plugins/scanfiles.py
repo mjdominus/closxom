@@ -1,7 +1,7 @@
 """Plugin to scan filesystem for article files."""
 
 from pathlib import Path
-from cloxsom.plugin.plugin import Plugin
+from closxom.plugin.plugin import Plugin
 
 
 class ScanFilesPlugin(Plugin):

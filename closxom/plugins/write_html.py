@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from datetime import datetime
-from cloxsom.plugin.plugin import Plugin
+from closxom.plugin.plugin import Plugin
 
 
 class WriteHtmlPlugin(Plugin):

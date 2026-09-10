@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
-"""Run a single cloxsom plugin in isolation, outside the full genblog pipeline."""
+"""Run a single closxom plugin in isolation, outside the full genblog pipeline."""
 
 import argparse
 import logging
 import sys
 
-from cloxsom.db import DB
-from cloxsom import logconfig
+from closxom.db import DB
+from closxom import logconfig
 
-from cloxsom.plugins.scanfiles import ScanFilesPlugin
-from cloxsom.plugins.readfiles import ReadFilesPlugin
-from cloxsom.plugins.notyet import NotYetPlugin
-from cloxsom.plugins.process_meta import ProcessMetaPlugin
-from cloxsom.plugins.compute_dates import ComputeDatesPlugin
-from cloxsom.plugins.build_article_pages import BuildArticlePagesPlugin
-from cloxsom.plugins.build_date_archives import BuildDateArchivesPlugin
-from cloxsom.plugins.build_topic_archives import BuildTopicArchivesPlugin
-from cloxsom.plugins.build_main_page import BuildMainPagePlugin
-from cloxsom.plugins.write_html import WriteHtmlPlugin
+from closxom.plugins.scanfiles import ScanFilesPlugin
+from closxom.plugins.readfiles import ReadFilesPlugin
+from closxom.plugins.notyet import NotYetPlugin
+from closxom.plugins.process_meta import ProcessMetaPlugin
+from closxom.plugins.compute_dates import ComputeDatesPlugin
+from closxom.plugins.build_article_pages import BuildArticlePagesPlugin
+from closxom.plugins.build_date_archives import BuildDateArchivesPlugin
+from closxom.plugins.build_topic_archives import BuildTopicArchivesPlugin
+from closxom.plugins.build_main_page import BuildMainPagePlugin
+from closxom.plugins.write_html import WriteHtmlPlugin
 
 PLUGINS = {
     cls.name(): cls
@@ -37,12 +37,12 @@ PLUGINS = {
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run a single cloxsom plugin in isolation")
+    parser = argparse.ArgumentParser(description="Run a single closxom plugin in isolation")
     parser.add_argument('plugin', choices=sorted(PLUGINS), help='Plugin to run')
     parser.add_argument('args', nargs='*',
                         help='Arguments for the plugin (currently ignored)')
-    parser.add_argument('--db', default='cloxsom.db',
-                        help='Database file (default: cloxsom.db)')
+    parser.add_argument('--db', default='closxom.db',
+                        help='Database file (default: closxom.db)')
     parser.add_argument('--input', default='articles',
                         help='Input directory (default: articles)')
     parser.add_argument('--verbose', '-v', action='store_true',
