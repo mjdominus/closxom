@@ -19,12 +19,22 @@ tracked as `lt` threads.
   - [ ] record the chosen build time in a DB build-metadata row
 - [ ] Split publication state into `pubdate` (UTC ISO-8601, or absent) and
       `published` (0/1, recomputed each build)
+- [ ] Meta ownership / provenance (design: redesign-decisions.md "Meta key
+      provenance")
+  - [ ] `meta.owner_id` column, `NOT NULL`, FK to `plugin(id)`
+  - [ ] `Plugin.__init__` wraps `db` so `self.db.find_*` binds returned skraps'
+        meta to `self.name()`; raw `db` access stays a trusted path
+  - [ ] replace `save_skrap`'s wholesale meta DELETE+INSERT with owner-scoped
+        per-key writes; enforce owner on write, raise on a foreign write
+  - [ ] `reconcile_meta(skrap, new_dict)` base-class helper
+  - [ ] (later) `skrap.meta` as a guarded merged mapping that raises on a
+        foreign-key mutation
 - [ ] Rework `process_meta`
   - [ ] split the META block from the body; write the body to a separate `body`
         field and leave `content` pristine
   - [ ] expose the raw `published:` string; no date parsing here
   - [ ] hard-reject a META section with no `title:`
-  - [ ] reconcile only the meta keys it authored (mechanism: `lt` y28ws8)
+  - [ ] use `reconcile_meta` for its authored keys
   - [ ] stop resaving every article every run
 - [ ] `fail_article(article, message)` base-class helper: log, set
       `published=0`, append to an end-of-run failure report; build exits nonzero
@@ -50,6 +60,8 @@ tracked as `lt` threads.
   - [ ] `.blog` with no `published:` and no `.notyet` -> cache lookup by path,
         hard-fail on a miss, write Eastern-local ISO-8601 with an offset
   - [ ] strip `published: 0` entirely
+  - [ ] warn if an article body already contains a Jinja2 delimiter
+        (`{{`, `{%`, `{#`) — it will collide with templating later
   - [ ] ignore everything but `*.blog` / `*.notyet`
   - [ ] fail late: accumulate all offenders, print the list, exit nonzero
 

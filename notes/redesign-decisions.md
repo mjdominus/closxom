@@ -50,6 +50,40 @@ threads.
 - The `$`-prefix "special key" convention was rejected: a single special/ordinary
   bit cannot express a key that legitimately has more than one possible source.
 
+### Mechanism
+
+- The `meta` table gets an `owner_id` column, `NOT NULL`, FK to `plugin(id)` —
+  the same shape as `skrap.owner_id`. Every `meta` row records the one plugin
+  that writes it.
+- **Invariant: every meta key has exactly one writer.** Two plugins never share a
+  key. If A and B each want a `perfume`-like value they use distinct names
+  (`a_perfume`, `b_perfume`). The raw `published:` header string (owned by
+  `process_meta`) and the resolver's derived value are therefore different keys.
+- A plugin may write a `meta` key for a skrap when the key does not yet exist —
+  it then becomes the owner — or when it already is the owner. Updating or
+  deleting a key owned by another plugin raises and fails the plugin.
+  Enforcement lives at persist time in the DB layer and is authoritative; the
+  in-memory guard below is a fast-feedback aid and may land later.
+- The writer identity is injected once: `Plugin.__init__` wraps the `db` handle
+  so `self.db.find_*` returns skraps whose `meta` is bound to `self.name()`.
+  Existing `self.db.find_*` call sites are unchanged. Raw `db` access with no
+  writer identity (tests, glue code) is a trusted path and skips the check.
+- `skrap.meta` stays a **single merged mapping** over all rows regardless of
+  owner — readers keep one place to look. It is a custom mapping that knows the
+  per-key owner and the current writer; mutating a foreign key (`__setitem__`,
+  `__delitem__`, `pop`, `update`, `setdefault`, `clear`) raises. Foreign values
+  are handed out as copies / immutable so in-place mutation cannot quietly
+  bypass the guard.
+- Reconciliation stays explicit but is a base-class helper —
+  `reconcile_meta(skrap, new_dict)` keyed on `self.name()`: write `new_dict`,
+  then delete this plugin's own rows for the skrap that are absent from it. The
+  prior key-set comes from the table (`WHERE skrap_id=? AND owner_id=?`), so
+  there is no separate bookkeeping record.
+- Consequence: `save_skrap`'s current wholesale meta DELETE + re-INSERT is
+  replaced by owner-scoped per-key writes. `skrap.meta` becomes read-oriented;
+  writes go through `update_skrap_meta` / `set_skrap_meta_defaults` /
+  `set_meta` / `reconcile_meta`, all carrying `self.name()`.
+
 ## Publication model
 
 Publication state is two fields:
@@ -194,9 +228,6 @@ Two fields and one decision table replace all of that.
 
 ## Open questions
 
-- **Provenance storage mechanism** for `process_meta`'s authored keys — its own
-  skrap replaced wholesale, vs. a tracked key-set. Framing agreed, mechanism
-  not chosen. (`lt` y28ws8)
 - **Publication-resolver plugin name** — keep `compute_dates` or rename to
   `resolve-publication`. (`lt` jwnuu5)
 - **`published` recompute vs. incremental-rebuild staleness** — a future-dated
