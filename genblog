@@ -4,6 +4,7 @@
 import argparse
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from closxom.db import DB
 from closxom.orchestrator import PluginOrchestrator
@@ -37,8 +38,19 @@ def main():
                         help='Verbose output')
     parser.add_argument('--recent', type=int, default=12,
                         help='Number of recent articles on main page (default: 12)')
+    # Defaults to America/New_York only because configuration is CLI-flags-only
+    # for now. Once file-based config exists this default goes away and the
+    # value becomes required - see notes/redesign-decisions.md.
+    parser.add_argument('--timezone', default='America/New_York',
+                        help='IANA timezone for interpreting dates (default: America/New_York)')
 
     args = parser.parse_args()
+
+    try:
+        ZoneInfo(args.timezone)
+    except ZoneInfoNotFoundError:
+        print(f"Error: unknown timezone {args.timezone!r}", file=sys.stderr)
+        return 1
 
     # Create or open database
     db_path = Path(args.db)
@@ -58,7 +70,12 @@ def main():
             print(f"Using existing database: {db_path}", file=sys.stderr)
 
     # Create orchestrator and register plugins
-    config = {'input_dir': args.input, 'output_dir': args.output, 'recent': args.recent}
+    config = {
+        'input_dir': args.input,
+        'output_dir': args.output,
+        'recent': args.recent,
+        'timezone': args.timezone,
+    }
     orchestrator = PluginOrchestrator(db, config)
 
     # File handling plugins

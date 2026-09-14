@@ -202,10 +202,16 @@ Two fields and one decision table replace all of that.
 
 ## Timezone semantics
 
-- The config zone (an IANA name, e.g. `America/New_York`) is a required key in
-  `config`. There is no default: `genblog` and `b2c` fail at startup if it is
-  missing or not constructible as `zoneinfo.ZoneInfo`. One blog-wide zone; no
-  per-article override.
+- The config zone (an IANA name, e.g. `America/New_York`) lives in `config`. One
+  blog-wide zone; no per-article override. `genblog`/`run-plugin` fail at
+  startup if the value is not constructible as `zoneinfo.ZoneInfo`.
+- **Interim, while configuration is CLI-flags-only:** `--timezone` defaults to
+  `America/New_York`, since there is nowhere yet to put a required value that
+  isn't typed on every invocation. Once file-based configuration exists, the
+  default must be removed and the value made required with no fallback — a
+  CLI default is a silent-wrong-zone hazard exactly like the one the required
+  config key was meant to prevent, and it should not persist longer than the
+  CLI-only phase demands.
 - `published:` accepts exactly: `YYYY-MM-DD` (noon in the config zone), a
   zoneless `YYYY-MM-DDThh:mm:ss` (that wall time in the config zone), or an
   offset-bearing datetime / `...Z` (taken as the instant it names). No unix

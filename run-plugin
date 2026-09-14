@@ -4,6 +4,7 @@
 import argparse
 import logging
 import sys
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from closxom.db import DB
 from closxom import logconfig
@@ -47,13 +48,24 @@ def main():
                         help='Input directory (default: articles)')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help='Verbose logging')
+    # Defaults to America/New_York only because configuration is CLI-flags-only
+    # for now. Once file-based config exists this default goes away and the
+    # value becomes required - see notes/redesign-decisions.md.
+    parser.add_argument('--timezone', default='America/New_York',
+                        help='IANA timezone for interpreting dates (default: America/New_York)')
 
     parsed = parser.parse_args()
+
+    try:
+        ZoneInfo(parsed.timezone)
+    except ZoneInfoNotFoundError:
+        print(f"Error: unknown timezone {parsed.timezone!r}", file=sys.stderr)
+        return 1
 
     logconfig.configure(level=logging.DEBUG if parsed.verbose else logging.WARNING)
 
     db = DB(parsed.db)
-    config = {'input_dir': parsed.input}
+    config = {'input_dir': parsed.input, 'timezone': parsed.timezone}
 
     plugin_class = PLUGINS[parsed.plugin]
     plugin = plugin_class(db, config)

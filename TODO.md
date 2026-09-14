@@ -6,12 +6,14 @@ tracked as `lt` threads.
 
 ## Redesign: publication + b2c
 
-- [ ] Timezone plumbing
-  - [ ] required `timezone` key in `config` (IANA name); `genblog` and `b2c`
-        fail at startup if it is missing or not constructible as
-        `zoneinfo.ZoneInfo`
-  - [ ] helper to parse the three `published:` forms (date-only, zoneless
-        datetime, offset-bearing) into a UTC instant
+- [x] `--timezone` CLI flag on `genblog` / `run-plugin` (IANA name), validated
+      via `zoneinfo.ZoneInfo` at startup; defaults to `America/New_York` for
+      now (interim, see redesign-decisions.md "Timezone semantics")
+  - [ ] once configuration can come from a file, drop the default and require
+        the value explicitly
+  - [ ] `b2c` needs the same required-zone validation
+- [ ] helper to parse the three `published:` forms (date-only, zoneless
+      datetime, offset-bearing) into a UTC instant
 - [ ] `now` / build-time plumbing
   - [ ] `PluginOrchestrator` records one frozen instant at start
   - [ ] pass it to plugins via `Plugin.__init__(..., now=None)`, not via `config`
