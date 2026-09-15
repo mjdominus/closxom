@@ -10,3 +10,6 @@ current architecture direction, unimplemented features, and known bugs.
 
 The package is named `closxom` throughout the code, matching the project name.
 
+## Commit messages
+
+Do not include `Co-Authored-By: Claude`.
