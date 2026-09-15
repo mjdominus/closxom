@@ -12,7 +12,7 @@ tracked as `lt` threads.
   - [ ] once configuration can come from a file, drop the default and require
         the value explicitly
   - [ ] `b2c` needs the same required-zone validation
-- [ ] helper to parse the three `published:` forms (date-only, zoneless
+- [x] helper to parse the three `published:` forms (date-only, zoneless
       datetime, offset-bearing) into a UTC instant
 - [ ] `now` / build-time plumbing
   - [ ] `PluginOrchestrator` records one frozen instant at start
