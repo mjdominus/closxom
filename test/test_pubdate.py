@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
+
 import pytest
 
-from closxom.pubdate import InvalidPublishedValue, parse_published
+from closxom.pubdate import InvalidInstantValue, parse_published, resolve_time
 
 ZONE = "America/New_York"
 
@@ -45,7 +47,7 @@ def test_surrounding_whitespace_is_tolerated():
     "",
 ])
 def test_rejects_anything_else(value):
-    with pytest.raises(InvalidPublishedValue):
+    with pytest.raises(InvalidInstantValue):
         parse_published(value, ZONE)
 
 
@@ -53,3 +55,24 @@ def test_unknown_zone_name_raises():
     from zoneinfo import ZoneInfoNotFoundError
     with pytest.raises(ZoneInfoNotFoundError):
         parse_published("2027-06-01", "Not/AZone")
+
+
+# ==================== resolve_time ====================
+
+def test_resolve_time_of_none_is_current_wall_clock():
+    before = datetime.now(timezone.utc)
+    result = resolve_time(None, ZONE)
+    after = datetime.now(timezone.utc)
+
+    assert result.tzinfo is timezone.utc
+    assert before <= result <= after
+
+
+def test_resolve_time_parses_like_parse_published():
+    result = resolve_time("2027-06-01", ZONE)
+    assert result == datetime(2027, 6, 1, 16, 0, 0, tzinfo=timezone.utc)
+
+
+def test_resolve_time_rejects_bad_value():
+    with pytest.raises(InvalidInstantValue):
+        resolve_time("soon", ZONE)
