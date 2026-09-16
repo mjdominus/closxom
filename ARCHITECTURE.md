@@ -34,8 +34,10 @@ filesystem
 
 | Path | What it is |
 |------|-----------|
-| `genblog` | Entry point.  Parses CLI args, opens DB, registers plugins, calls orchestrator. |
-| `run-plugin` | Loads and runs a single plugin by name, outside the full orchestrator — for exercising one plugin in isolation. Same `--input`/`--db` overrides as `genblog`. |
+| `genblog` | Thin executable wrapper: `sys.exit(run(sys.argv[1:]))`, calling `closxom/app/genblog.py`. |
+| `closxom/app/genblog.py` | `run(argv)` — parses CLI args, opens DB, registers plugins, calls orchestrator. |
+| `run-plugin` | Thin executable wrapper around `closxom/app/run_plugin.py`, same pattern as `genblog`. |
+| `closxom/app/run_plugin.py` | `run(argv)` — loads and runs a single plugin by name, outside the full orchestrator, for exercising one plugin in isolation. Same `--input`/`--db` overrides as `genblog`. |
 | `SCHEMA/skrap.sql` | `skrap` table: id, name, type, owner\_id, last\_modified |
 | `SCHEMA/meta.sql` | `meta` table: key/value metadata attached to a skrap |
 | `SCHEMA/plugin.sql` | `plugin` table: maps plugin name → integer id |
