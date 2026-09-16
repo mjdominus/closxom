@@ -1,0 +1,4 @@
+CREATE TABLE `build` (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  build_time TEXT NOT NULL
+);

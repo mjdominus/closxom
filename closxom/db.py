@@ -1,4 +1,5 @@
 
+from datetime import datetime
 from pathlib import Path
 import logging
 import sqlite3
@@ -58,6 +59,21 @@ class DB():
         c.execute("SELECT id FROM plugin WHERE name = ?", (plugin_name,))
         row = c.fetchone()
         return row['id'] if row else None
+
+    # ==================== Build metadata ====================
+
+    def record_build_time(self, now):
+        """Record now (an aware datetime) as the build_time of this run."""
+        self.conn.execute("INSERT INTO build (build_time) VALUES (?)", (now.isoformat(),))
+        self.conn.commit()
+
+    def get_latest_build_time(self):
+        """Return the most recently recorded build_time as an aware
+        datetime, or None if no build has been recorded yet."""
+        c = self.conn.cursor()
+        c.execute("SELECT build_time FROM build ORDER BY id DESC LIMIT 1")
+        row = c.fetchone()
+        return datetime.fromisoformat(row['build_time']) if row else None
 
     # ==================== Skrap (product) queries ====================
 
