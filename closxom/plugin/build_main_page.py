@@ -22,12 +22,12 @@ class BuildMainPagePlugin(Plugin):
     def outputs(cls):
         return ["page"]
 
-    def __init__(self, db, config=None):
+    def __init__(self, db, config=None, now=None):
         """Initialize the main page builder.
 
         Reads config['recent'] (defaults to 12).
         """
-        super().__init__(db, config)
+        super().__init__(db, config, now=now)
         self.num_recent = self.config.get('recent', 12)
 
     def run(self):

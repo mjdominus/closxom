@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from closxom.db import DB
 from closxom.orchestrator import PluginOrchestrator
+from closxom.pubdate import InvalidInstantValue, resolve_time
 
 # Import all plugins
 from closxom.plugin.scanfiles import ScanFilesPlugin
@@ -43,6 +44,9 @@ def main():
     # value becomes required - see notes/redesign-decisions.md.
     parser.add_argument('--timezone', default='America/New_York',
                         help='IANA timezone for interpreting dates (default: America/New_York)')
+    parser.add_argument('--time', default=None,
+                        help='Build time override (default: current time); '
+                             'parsed like a published: value, in --timezone')
 
     args = parser.parse_args()
 
@@ -50,6 +54,12 @@ def main():
         ZoneInfo(args.timezone)
     except ZoneInfoNotFoundError:
         print(f"Error: unknown timezone {args.timezone!r}", file=sys.stderr)
+        return 1
+
+    try:
+        now = resolve_time(args.time, args.timezone)
+    except InvalidInstantValue as e:
+        print(f"Error: {e}", file=sys.stderr)
         return 1
 
     # Create or open database
@@ -76,7 +86,7 @@ def main():
         'recent': args.recent,
         'timezone': args.timezone,
     }
-    orchestrator = PluginOrchestrator(db, config)
+    orchestrator = PluginOrchestrator(db, config, now=now)
 
     # File handling plugins
     orchestrator.register(ScanFilesPlugin)

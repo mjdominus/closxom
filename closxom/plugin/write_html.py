@@ -23,12 +23,12 @@ class WriteHtmlPlugin(Plugin):
     def outputs(cls):
         return []  # Writes to filesystem
 
-    def __init__(self, db, config=None):
+    def __init__(self, db, config=None, now=None):
         """Initialize the HTML writer.
 
         Reads config['output_dir'] (defaults to 'output').
         """
-        super().__init__(db, config)
+        super().__init__(db, config, now=now)
         self.output_dir = Path(self.config.get('output_dir') or "output")
 
     def run(self):

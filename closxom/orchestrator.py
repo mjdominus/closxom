@@ -2,6 +2,7 @@
 
 import sys
 from collections import defaultdict, deque
+from datetime import datetime, timezone
 from typing import List, Set, Dict, Type
 
 
@@ -12,9 +13,13 @@ class PluginOrchestrator:
     The orchestrator builds a dependency graph and executes plugins in the correct order.
     """
 
-    def __init__(self, db, config=None):
+    def __init__(self, db, config=None, now=None):
+        """now is the frozen build time (an aware UTC datetime) handed to
+        every plugin this orchestrator runs; defaults to the current
+        wall-clock time. Recorded to the DB once, at the start of run()."""
         self.db = db
         self.config = config or {}
+        self.now = now if now is not None else datetime.now(timezone.utc)
         self.plugins: List[Type] = []
         self.plugin_instances: Dict[str, object] = {}
 
@@ -94,6 +99,8 @@ class PluginOrchestrator:
         """Execute all registered plugins in dependency order."""
         execution_order = self.topological_sort()
 
+        self.db.record_build_time(self.now)
+
         if verbose:
             print("Plugin execution order:", file=sys.stderr)
             for i, name in enumerate(execution_order, 1):
@@ -111,7 +118,7 @@ class PluginOrchestrator:
             if verbose:
                 print(f"Running plugin: {plugin_name}", file=sys.stderr)
 
-            plugin = plugin_class(self.db, self.config)
+            plugin = plugin_class(self.db, self.config, now=self.now)
             self.plugin_instances[plugin_name] = plugin
 
             try:

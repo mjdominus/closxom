@@ -28,12 +28,12 @@ class ScanFilesPlugin(Plugin):
     def outputs(cls):
         return ["file"]
 
-    def __init__(self, db, config=None):
+    def __init__(self, db, config=None, now=None):
         """Initialize the scanfiles plugin.
 
         Reads config['input_dir'] (defaults to 'articles').
         """
-        super().__init__(db, config)
+        super().__init__(db, config, now=now)
         self.input_dir = Path(self.config.get('input_dir') or "articles")
 
     def run(self, target_list=None, options=None):

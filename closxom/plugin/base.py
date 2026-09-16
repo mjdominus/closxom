@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 # abstract class for plugins
 
@@ -39,14 +40,20 @@ class Plugin():
         """Return list of product type strings this plugin produces."""
         raise NotImplementedError(f"Plugin {cls} must implement outputs()")
 
-    def __init__(self, db, config=None):
-        """Initialize plugin with database handle and shared run config.
+    def __init__(self, db, config=None, now=None):
+        """Initialize plugin with database handle, shared run config, and
+        with the build's frozen "now" instant.
 
         config is a dict of settings passed by the entry point (input_dir,
         output_dir, etc.) that any plugin may consult; unused by most.
+        now is the orchestrator's frozen build time (an aware UTC
+        datetime); it defaults to the current wall-clock time if not
+        supplied, so a plugin instantiated directly (e.g. in a test)
+        still gets a usable value.
         """
         self.db = db
         self.config = config or {}
+        self.now = now if now is not None else datetime.now(timezone.utc)
         self.log = logging.getLogger(f"closxom.plugin.{self.name()}")
 
     def default_target_list(self) -> list:

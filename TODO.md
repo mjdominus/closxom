@@ -14,11 +14,11 @@ tracked as `lt` threads.
   - [ ] `b2c` needs the same required-zone validation
 - [x] helper to parse the three `published:` forms (date-only, zoneless
       datetime, offset-bearing) into a UTC instant
-- [ ] `now` / build-time plumbing
-  - [ ] `PluginOrchestrator` records one frozen instant at start
-  - [ ] pass it to plugins via `Plugin.__init__(..., now=None)`, not via `config`
-  - [ ] `--time` override on `genblog` and `run-plugin`; default is wall-clock
-  - [ ] record the chosen build time in a DB build-metadata row
+- [x] `now` / build-time plumbing
+  - [x] `PluginOrchestrator` records one frozen instant at start
+  - [x] pass it to plugins via `Plugin.__init__(..., now=None)`, not via `config`
+  - [x] `--time` override on `genblog` and `run-plugin`; default is wall-clock
+  - [x] record the chosen build time in a DB build-metadata row
 - [ ] Split publication state into `pubdate` (UTC ISO-8601, or absent) and
       `published` (0/1, recomputed each build)
 - [ ] Meta ownership / provenance (design: redesign-decisions.md "Meta key
