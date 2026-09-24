@@ -55,8 +55,6 @@ class ScanFilesPlugin(Plugin):
 
             relpath = path.relative_to(self.input_dir)
             mtime = path.stat().st_mtime
-            notyet_path = path.parent / (path.name + '.notyet')
-            has_notyet = notyet_path.exists()
 
             # Update the existing FileSkrap in place if one already exists
             # for this name, rather than trying to insert a second row and
@@ -64,9 +62,7 @@ class ScanFilesPlugin(Plugin):
             file_skrap = self.db.find_or_create_skrap("file", str(relpath), self.name())
             is_new = file_skrap.id is None
 
-            if not is_new and (
-                    file_skrap.meta.get('file_mtime') == mtime and
-                    file_skrap.meta.get('has_notyet') == has_notyet):
+            if not is_new and file_skrap.meta.get('file_mtime') == mtime:
                 self.log.info("Skipping %r: unchanged", str(relpath))
                 continue
 
@@ -83,7 +79,6 @@ class ScanFilesPlugin(Plugin):
                 'path': str(path.absolute()),
                 'relpath': str(relpath),
                 'file_mtime': mtime,
-                'has_notyet': has_notyet,
             })
 
             self.db.save_skrap(file_skrap)

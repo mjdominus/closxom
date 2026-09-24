@@ -71,7 +71,3 @@ def test_scanfiles_detects_notyet_marker(skrapdb, articles_dir):
 
     files = skrapdb.find_all_skrap_by_type("file")
     assert len(files) == 1
-    # Booleans don't round-trip through the meta store (no bool type in
-    # SQLite, and _load_metadata's json.loads only fires on str/bytes) -
-    # True comes back as 1. See TODO.md's metadata-typing item.
-    assert files[0].meta['has_notyet']

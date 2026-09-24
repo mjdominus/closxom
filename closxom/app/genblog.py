@@ -15,7 +15,6 @@ from closxom.pubdate import InvalidInstantValue, resolve_time
 # Import all plugins
 from closxom.plugin.scanfiles import ScanFilesPlugin
 from closxom.plugin.readfiles import ReadFilesPlugin
-from closxom.plugin.notyet import NotYetPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.compute_dates import ComputeDatesPlugin
 from closxom.plugin.build_article_pages import BuildArticlePagesPlugin
@@ -93,7 +92,6 @@ def run(argv=None):
     # File handling plugins
     orchestrator.register(ScanFilesPlugin)
     orchestrator.register(ReadFilesPlugin)
-    orchestrator.register(NotYetPlugin)
 
     # Article processing plugins
     orchestrator.register(ProcessMetaPlugin)
