@@ -99,6 +99,10 @@ Publication state is two fields:
 
 - Absent `pubdate` is *unconditionally* unpublished. A future `pubdate` is stored
   but `published` stays 0 until the build clock passes it.
+- Unpublishing a previously-published article is done by deleting its
+  `published:` line from the source file, returning it to the absent-`pubdate`
+  state. No separate override mechanism (e.g. a boolean force-unpublish flag)
+  is needed.
 - The old article-date **cache is eliminated**. `.notyet` files are
   **eliminated** (`b2c` converts them). The `notyet` plugin is **deleted**.
 - Every `build_*` plugin already pulls `db.find_all_published_articles()`, so

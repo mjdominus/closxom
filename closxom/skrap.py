@@ -105,11 +105,11 @@ class ArticleSkrap(Skrap):
     """Represents a blog article.
 
     Metadata keys:
-        content: Raw article content (after META removal)
         title: Article title
-        date: Publication date
         tags: List of tags
-        published: Whether article should be published
+        published_raw: Raw `published:` META string, owned by process_meta
+        pubdate: Parsed publication instant (UTC ISO-8601), or absent
+        published: 0/1, recomputed each build from pubdate <= now
         path: Original file path
     """
     @classmethod

@@ -63,7 +63,7 @@ def test_scanfiles_skips_unchanged_file(skrapdb, articles_dir):
     assert first_last_updated == second_last_updated
 
 
-def test_scanfiles_detects_notyet_marker(skrapdb, articles_dir):
+def test_scanfiles_ignores_notyet_marker_file(skrapdb, articles_dir):
     (articles_dir / "foo.blog").write_text("original content")
     (articles_dir / "foo.blog.notyet").touch()
 
@@ -71,3 +71,4 @@ def test_scanfiles_detects_notyet_marker(skrapdb, articles_dir):
 
     files = skrapdb.find_all_skrap_by_type("file")
     assert len(files) == 1
+    assert files[0].name == "foo.blog"

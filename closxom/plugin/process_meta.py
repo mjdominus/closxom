@@ -35,6 +35,17 @@ class ProcessMetaPlugin(Plugin):
             if content.startswith('META\n'):
                 meta_dict, body = self.parse_meta(content)
 
+                # 'published' is a distinct key from the resolver's derived
+                # 'pubdate'/'published' (see notes/redesign-decisions.md,
+                # "Meta key provenance": one writer per key). Reconciled
+                # explicitly (rather than via .update()) so deleting the
+                # published: line from the source file actually clears a
+                # stale value, which is how an article is unpublished.
+                if 'published' in meta_dict:
+                    article.meta['published_raw'] = meta_dict.pop('published')
+                else:
+                    article.meta.pop('published_raw', None)
+
                 # Update article metadata
                 article.meta.update(meta_dict)
                 article.content = body

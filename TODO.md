@@ -19,7 +19,7 @@ tracked as `lt` threads.
   - [x] pass it to plugins via `Plugin.__init__(..., now=None)`, not via `config`
   - [x] `--time` override on `genblog` and `run-plugin`; default is wall-clock
   - [x] record the chosen build time in a DB build-metadata row
-- [ ] Split publication state into `pubdate` (UTC ISO-8601, or absent) and
+- [x] Split publication state into `pubdate` (UTC ISO-8601, or absent) and
       `published` (0/1, recomputed each build)
 - [ ] Meta ownership / provenance (design: redesign-decisions.md "Meta key
       provenance")

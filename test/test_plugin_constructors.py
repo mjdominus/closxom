@@ -9,7 +9,7 @@ from closxom.plugin.build_article_pages import BuildArticlePagesPlugin
 from closxom.plugin.build_date_archives import BuildDateArchivesPlugin
 from closxom.plugin.build_main_page import BuildMainPagePlugin
 from closxom.plugin.build_topic_archives import BuildTopicArchivesPlugin
-from closxom.plugin.compute_dates import ComputeDatesPlugin
+from closxom.plugin.resolve_publication import ResolvePublicationPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.readfiles import ReadFilesPlugin
 from closxom.plugin.scanfiles import ScanFilesPlugin
@@ -19,7 +19,7 @@ ALL_PLUGINS = [
     ScanFilesPlugin,
     ReadFilesPlugin,
     ProcessMetaPlugin,
-    ComputeDatesPlugin,
+    ResolvePublicationPlugin,
     BuildArticlePagesPlugin,
     BuildDateArchivesPlugin,
     BuildTopicArchivesPlugin,

@@ -1,19 +1,34 @@
-"""Plugin to compute publication dates for articles."""
+"""Plugin to resolve publication state for articles.
+
+See notes/redesign-decisions.md, "Publication model", for the design this
+implements.
+"""
 
 from datetime import datetime
+
 from closxom.plugin.base import Plugin
+from closxom.pubdate import InvalidInstantValue, parse_published
 
 
-class ComputeDatesPlugin(Plugin):
-    """Computes publication dates for articles.
+class ResolvePublicationPlugin(Plugin):
+    """Owns all publication logic: turns the raw `published:` META string
+    (process_meta's `published_raw`) into `pubdate` (a UTC ISO-8601 instant,
+    or absent) and `published` (0/1).
 
-    Uses metadata 'date' field if present, otherwise falls back to
-    file modification time.
+    published_raw  pubdate         published
+    absent         absent          0
+    a future date  that instant    0
+    a past date    that instant    1
+
+    published is recomputed every run from pubdate <= now; it is not an
+    independently authored value. A malformed published_raw is treated the
+    same as absent - the article is left unpublished with no pubdate - and
+    logged; must run after process_meta.
     """
 
     @classmethod
     def name(cls):
-        return "compute-dates"
+        return "resolve-publication"
 
     @classmethod
     def inputs(cls):
@@ -24,52 +39,38 @@ class ComputeDatesPlugin(Plugin):
         return []  # Modifies articles in place
 
     def run(self):
-        """Compute publication dates for all articles."""
+        """Resolve pubdate/published for all articles."""
         articles = self.db.find_all_skrap_by_type("article")
+        zone_name = self.config.get('timezone', 'America/New_York')
 
-        computed = 0
+        resolved = 0
         for article in articles:
-            # Skip if already has a parsed date
-            if 'date' in article.meta and isinstance(article.meta['date'], (int, float)):
-                continue
+            raw = article.meta.get('published_raw')
 
-            date_timestamp = None
+            pubdate = None
+            if raw:
+                try:
+                    pubdate = parse_published(raw, zone_name)
+                except InvalidInstantValue as e:
+                    self.log.error(
+                        "%s: invalid published: value %r: %s", article.name, raw, e)
 
-            # Try to parse from META date field
-            if 'date' in article.meta and isinstance(article.meta['date'], str):
-                date_timestamp = self.parse_date_string(article.meta['date'])
+            published = pubdate is not None and datetime.fromisoformat(pubdate) <= self.now
 
-            # Fall back to file mtime
-            if date_timestamp is None:
-                date_timestamp = article.meta.get('file_mtime')
+            changed = False
+            if pubdate != article.meta.get('pubdate'):
+                if pubdate is None:
+                    del article.meta['pubdate']
+                else:
+                    article.meta['pubdate'] = pubdate
+                changed = True
 
-            if date_timestamp is not None:
-                article.meta['date'] = date_timestamp
+            if int(published) != article.meta.get('published'):
+                article.meta['published'] = int(published)
+                changed = True
+
+            if changed:
                 self.db.save_skrap(article)
-                computed += 1
+                resolved += 1
 
-        return computed
-
-    def parse_date_string(self, date_str):
-        """Parse a date string to Unix timestamp.
-
-        Supports formats like:
-        - YYYY-MM-DD
-        - YYYY/MM/DD
-        - Unix timestamp
-        """
-        # Try parsing as Unix timestamp
-        try:
-            return float(date_str)
-        except ValueError:
-            pass
-
-        # Try parsing as ISO date
-        for fmt in ['%Y-%m-%d', '%Y/%m/%d', '%Y-%m-%d %H:%M:%S']:
-            try:
-                dt = datetime.strptime(date_str, fmt)
-                return dt.timestamp()
-            except ValueError:
-                continue
-
-        return None
+        return resolved
