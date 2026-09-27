@@ -21,14 +21,14 @@ tracked as `lt` threads.
   - [x] record the chosen build time in a DB build-metadata row
 - [x] Split publication state into `pubdate` (UTC ISO-8601, or absent) and
       `published` (0/1, recomputed each build)
-- [ ] Meta ownership / provenance (design: redesign-decisions.md "Meta key
+- [x] Meta ownership / provenance (design: redesign-decisions.md "Meta key
       provenance")
-  - [ ] `meta.owner_id` column, `NOT NULL`, FK to `plugin(id)`
-  - [ ] `Plugin.__init__` wraps `db` so `self.db.find_*` binds returned skraps'
+  - [x] `meta.owner_id` column, `NOT NULL`, FK to `plugin(id)`
+  - [x] `Plugin.__init__` wraps `db` so `self.db.find_*` binds returned skraps'
         meta to `self.name()`; raw `db` access stays a trusted path
-  - [ ] replace `save_skrap`'s wholesale meta DELETE+INSERT with owner-scoped
+  - [x] replace `save_skrap`'s wholesale meta DELETE+INSERT with owner-scoped
         per-key writes; enforce owner on write, raise on a foreign write
-  - [ ] `reconcile_meta(skrap, new_dict)` base-class helper
+  - [x] `reconcile_meta(skrap, new_dict)` base-class helper
   - [ ] (later) `skrap.meta` as a guarded merged mapping that raises on a
         foreign-key mutation
 - [ ] Rework `process_meta`

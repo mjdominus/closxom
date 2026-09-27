@@ -10,6 +10,14 @@ import closxom.skrap
 
 logger = logging.getLogger("closxom.db")
 
+class ForeignMetaWrite(Exception):
+    """Raised when a save attempts to change the value of a meta key
+    owned by a different plugin, or to remove one. Reads always merge
+    every owner's keys into skrap.meta, so a foreign-owned key can only
+    go missing at save time through an explicit del or a wholesale
+    reassignment of skrap.meta - never legitimately."""
+    pass
+
 class DB():
     """Database abstraction layer for closxom.
 
@@ -132,13 +140,17 @@ class DB():
         """Find all published article skrap objects."""
         return [art for art in self.find_all_skrap_by_type('article') if art.is_published()]
 
+    def _plugin_name(self, plugin_id):
+        """Look up a plugin's name by its database id, or None if no
+        such plugin exists."""
+        c = self.conn.cursor()
+        c.execute("SELECT name FROM plugin WHERE id = ?", (plugin_id,))
+        row = c.fetchone()
+        return row['name'] if row else None
+
     def _skrap_from_row(self, row):
         """Construct a Skrap object from a database row."""
-        # Get the plugin name from the owner_id
-        c = self.conn.cursor()
-        c.execute("SELECT name FROM plugin WHERE id = ?", (row['owner_id'],))
-        plugin_row = c.fetchone()
-        owner_name = plugin_row['name'] if plugin_row else "unknown"
+        owner_name = self._plugin_name(row['owner_id']) or "unknown"
 
         # Create the appropriate Skrap subclass based on type
         skrap_class = closxom.skrap.get_skrap_class(row['type'])
@@ -159,18 +171,45 @@ class DB():
         """Load all metadata for a skrap object."""
         c = self.conn.cursor()
         c.execute("SELECT k, v FROM meta WHERE skrap_id = ?", (skrap_id,))
-        meta = {}
-        for row in c.fetchall():
-            v = row['v']
-            # Only compound values (lists, dicts) are JSON-encoded on
-            # save; scalars are stored as-is.
-            if isinstance(v, str) and v[:1] in ('[', '{'):
-                try:
-                    v = json.loads(v)
-                except json.JSONDecodeError:
-                    pass
-            meta[row['k']] = v
-        return meta
+        return {row['k']: self._deserialize_meta_value(row['v']) for row in c.fetchall()}
+
+    def _serialize_meta_value(self, v):
+        """Serialize compound values as JSON; store scalars as-is.
+        SQLite has no boolean type, so coerce bools to 0/1."""
+        if isinstance(v, (dict, list)):
+            return json.dumps(v)
+        elif isinstance(v, bool):
+            return int(v)
+        else:
+            return v
+
+    def _deserialize_meta_value(self, v):
+        """Inverse of _serialize_meta_value. Only compound values (lists,
+        dicts) are JSON-encoded on save; scalars are stored as-is."""
+        if isinstance(v, str) and v[:1] in ('[', '{'):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                pass
+        return v
+
+    def meta_keys_owned_by(self, skrap, owner_name):
+        """Return the set of meta keys currently persisted for skrap
+        whose owner is owner_name. Empty if skrap is not yet saved or
+        owner_name has never written a key for it.
+
+        owner_name must already be a registered plugin - every Plugin
+        registers itself in __init__, so an unregistered name here means
+        a bug in the caller, not a pipeline ordering issue."""
+        if skrap.id is None:
+            return set()
+        owner_id = self.get_plugin_id(owner_name)
+        if owner_id is None:
+            raise ValueError(f"{owner_name!r} is not a registered plugin")
+        c = self.conn.cursor()
+        c.execute("SELECT k FROM meta WHERE skrap_id = ? AND owner_id = ?",
+                  (skrap.id, owner_id))
+        return {row['k'] for row in c.fetchall()}
 
     # ==================== Skrap (product) creation and updates ====================
 
@@ -181,7 +220,7 @@ class DB():
         """
         skrap_class = closxom.skrap.get_skrap_class(type_name)
         skrap_obj = skrap_class(name=name, owner=owner_name, meta=meta, content=content)
-        self.save_skrap(skrap_obj)
+        self.save_skrap(skrap_obj, owner=owner_name)
         return skrap_obj
 
     def find_or_create_skrap(self, type_name, name, owner_name):
@@ -197,13 +236,25 @@ class DB():
         skrap_class = closxom.skrap.get_skrap_class(type_name)
         return skrap_class(name=name, owner=owner_name)
 
-    def save_skrap(self, o):
-        """Save or update a skrap object in the database."""
-        import time
+    def save_skrap(self, o, owner):
+        """Save or update a skrap object in the database.
+
+        owner is the name of the plugin performing this save, used to
+        attribute any meta keys it adds or changes. Plugin code never
+        passes this explicitly - Plugin.__init__ binds self.db to the
+        plugin's own name, so self.db.save_skrap(skrap) supplies it
+        automatically. Direct callers (tests, one-off scripts) must
+        state it themselves.
+
+        Meta ownership is validated before the skrap row itself is
+        touched, so a ForeignMetaWrite leaves the whole save - skrap row
+        included - unapplied, not just the meta rows.
+        """
         o.set_last_updated()
 
-        # Ensure owner plugin is registered
         owner_id = self.ensure_plugin_registered(o.owner)
+        meta_owner_id = self.ensure_plugin_registered(owner)
+        existing_meta = self._validate_meta_ownership(o, meta_owner_id)
 
         if o.id is None:
             # Insert new skrap
@@ -224,7 +275,7 @@ class DB():
                 WHERE id = ?
             """, (o.name, o.type, owner_id, o.last_updated, o.content, o.id))
 
-        self.save_skrap_metadata(o)
+        self._write_meta(o, meta_owner_id, existing_meta)
         self.conn.commit()
 
         logger.info("Saved skrap %s (%r) owned by plugin %r",
@@ -232,28 +283,53 @@ class DB():
 
         return o.id
 
-    def save_skrap_metadata(self, o):
-        """Save metadata for a skrap object."""
+    def _validate_meta_ownership(self, o, owner_id):
+        """Check that o.meta does not change or remove any key owned by
+        a plugin other than owner_id, raising ForeignMetaWrite if it
+        does. Returns the current (owner_id, value) per meta key, for
+        _write_meta to apply afterward - empty if o is not yet saved.
+        """
         if o.id is None:
-            raise Exception("Cannot save metadata for skrap without ID")
+            return {}
 
-        # Delete existing metadata
-        self.conn.execute("DELETE FROM meta WHERE skrap_id = ?", (o.id,))
+        c = self.conn.cursor()
+        c.execute("SELECT k, v, owner_id FROM meta WHERE skrap_id = ?", (o.id,))
+        existing = {
+            row['k']: (row['owner_id'], self._deserialize_meta_value(row['v']))
+            for row in c.fetchall()
+        }
 
-        # Insert new metadata
+        for k, (existing_owner_id, existing_v) in existing.items():
+            if existing_owner_id != owner_id and (k not in o.meta or o.meta[k] != existing_v):
+                owner_desc = self._plugin_name(existing_owner_id) or existing_owner_id
+                raise ForeignMetaWrite(
+                    f"skrap {o.id} ({o.name!r}): cannot change meta key "
+                    f"{k!r}, owned by plugin {owner_desc!r}")
+
+        return existing
+
+    def _write_meta(self, o, owner_id, existing):
+        """Apply o.meta to the meta table for owner_id, given the
+        existing (owner_id, value) per key from _validate_meta_ownership.
+        Assumes validation already passed: a row owned by owner_id is
+        deleted if its key is absent from o.meta, or updated if o.meta's
+        value for it differs; a row owned by a different plugin is left
+        alone; a key in o.meta with no existing row is inserted fresh.
+        """
+        for k, (existing_owner_id, existing_v) in existing.items():
+            if existing_owner_id != owner_id:
+                continue
+            if k not in o.meta:
+                self.conn.execute(
+                    "DELETE FROM meta WHERE skrap_id = ? AND k = ?", (o.id, k))
+            elif o.meta[k] != existing_v:
+                self.conn.execute(
+                    "UPDATE meta SET v = ? WHERE skrap_id = ? AND k = ?",
+                    (self._serialize_meta_value(o.meta[k]), o.id, k))
+
         for k, v in o.meta.items():
-            # Serialize compound values as JSON; store scalars as-is.
-            # SQLite has no boolean type, so coerce bools to 0/1.
-            if isinstance(v, (dict, list)):
-                v_serialized = json.dumps(v)
-            elif isinstance(v, bool):
-                v_serialized = int(v)
-            else:
-                v_serialized = v
-
-            self.conn.execute("""
-                INSERT INTO meta (skrap_id, k, v)
-                VALUES (?, ?, ?)
-            """, (o.id, k, v_serialized))
-
-        self.conn.commit()
+            if k not in existing:
+                self.conn.execute("""
+                    INSERT INTO meta (skrap_id, k, v, owner_id)
+                    VALUES (?, ?, ?, ?)
+                """, (o.id, k, self._serialize_meta_value(v), owner_id))

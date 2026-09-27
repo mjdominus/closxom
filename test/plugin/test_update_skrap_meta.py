@@ -10,7 +10,7 @@ class _P(Plugin):
 
 def _fresh_skrap(db, **meta):
     s = FileSkrap(name="s", owner="updater", meta=dict(meta))
-    db.save_skrap(s)
+    db.save_skrap(s, owner="updater")
     return db.find_skrap_by_name("updater", "s")
 
 

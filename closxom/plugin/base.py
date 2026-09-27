@@ -6,6 +6,23 @@ from datetime import datetime, timezone
 class UnimplementedMethod(Exception):
     pass
 
+class _OwnerBoundDB():
+    """Wraps a DB so that save_skrap implicitly attributes meta writes
+    to the wrapped plugin's name, without every plugin having to pass
+    its own name around. Reads pass straight through to the wrapped DB
+    unfiltered; only save_skrap is overridden.
+    """
+
+    def __init__(self, db, owner):
+        self._db = db
+        self._owner = owner
+
+    def __getattr__(self, name):
+        return getattr(self._db, name)
+
+    def save_skrap(self, skrap):
+        return self._db.save_skrap(skrap, owner=self._owner)
+
 class Plugin():
     """Base class for all plugins.
 
@@ -50,8 +67,13 @@ class Plugin():
         datetime); it defaults to the current wall-clock time if not
         supplied, so a plugin instantiated directly (e.g. in a test)
         still gets a usable value.
+
+        Registers this plugin in the database under its own name, so
+        that meta_keys_owned_by(skrap, self.name()) is never asked
+        about a plugin that doesn't exist yet.
         """
-        self.db = db
+        db.ensure_plugin_registered(self.name())
+        self.db = _OwnerBoundDB(db, self.name())
         self.config = config or {}
         self.now = now if now is not None else datetime.now(timezone.utc)
         self.log = logging.getLogger(f"closxom.plugin.{self.name()}")
@@ -144,6 +166,28 @@ class Plugin():
                     value = int(value)
                 skrap.meta[key] = value
                 changed = True
+        if changed:
+            self.db.save_skrap(skrap)
+        return changed
+
+    def reconcile_meta(self, skrap, new_dict):
+        """Replace this plugin's previously authored meta keys on skrap
+        with new_dict: every key in new_dict is set (added or
+        overwritten), and any key this plugin owned before but that is
+        absent from new_dict is removed. Keys owned by other plugins are
+        never touched. Saves only if something changed. Returns True if
+        a save occurred, False otherwise.
+        """
+        owned = self.db.meta_keys_owned_by(skrap, self.name())
+        to_delete = owned - new_dict.keys()
+
+        changed = bool(to_delete) or any(
+            skrap.meta.get(k) != v for k, v in new_dict.items())
+
+        for k in to_delete:
+            del skrap.meta[k]
+        skrap.meta.update(new_dict)
+
         if changed:
             self.db.save_skrap(skrap)
         return changed

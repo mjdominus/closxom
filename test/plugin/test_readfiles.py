@@ -9,7 +9,7 @@ def _save_file_skrap(db, name="foo.blog", content="original", meta=None):
     elif meta:
         fs.meta.update(meta)
     fs.content = content
-    db.save_skrap(fs)
+    db.save_skrap(fs, owner="scanfiles")
     return fs
 
 
@@ -66,7 +66,7 @@ def test_stale_file_skrap_with_equal_content_is_not_resaved(skrapdb):
 def test_file_skrap_with_no_content_is_skipped(skrapdb):
     fs = FileSkrap(name="foo.blog", owner="scanfiles", meta={})
     fs.content = None
-    skrapdb.save_skrap(fs)
+    skrapdb.save_skrap(fs, owner="scanfiles")
 
     ReadFilesPlugin(skrapdb, {}).run()
 

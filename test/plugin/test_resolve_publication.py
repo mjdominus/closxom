@@ -12,7 +12,7 @@ def _make_article(db, name, published_raw=None):
     if published_raw is not None:
         meta['published_raw'] = published_raw
     article = ArticleSkrap(name=name, owner="process-meta", meta=meta)
-    db.save_skrap(article)
+    db.save_skrap(article, owner="process-meta")
     return article
 
 
@@ -82,7 +82,7 @@ def test_deleting_published_raw_unpublishes_a_previously_published_article(skrap
     # remove published_raw from meta on its next run.
     article = _get_article(skrapdb, "foo.blog")
     del article.meta['published_raw']
-    skrapdb.save_skrap(article)
+    skrapdb.save_skrap(article, owner="process-meta")
 
     ResolvePublicationPlugin(skrapdb, {}, now=NOW).run()
 

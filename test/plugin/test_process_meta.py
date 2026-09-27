@@ -4,7 +4,7 @@ from closxom.skrap import ArticleSkrap
 
 def _make_article(db, name, content):
     article = ArticleSkrap(name=name, owner="readfiles", content=content)
-    db.save_skrap(article)
+    db.save_skrap(article, owner="readfiles")
     return article
 
 
@@ -29,7 +29,7 @@ def test_deleting_published_header_clears_published_raw(skrapdb):
 
     article = _get_article(skrapdb, "foo.blog")
     article.content = "META\ntitle: Foo\n\nBody."
-    skrapdb.save_skrap(article)
+    skrapdb.save_skrap(article, owner="readfiles")
 
     ProcessMetaPlugin(skrapdb, {}).run()
 
