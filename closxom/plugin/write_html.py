@@ -110,10 +110,9 @@ class WriteHtmlPlugin(Plugin):
         for article in articles:
             art_title = article.meta.get('title', 'Untitled')
             art_date = article.meta.get('date')
-            art_relpath = article.meta.get('relpath', '')
 
-            # Convert article path to URL
-            url = art_relpath.rsplit('.', 1)[0] + '.html' if art_relpath else '#'
+            # article.name is the source file's relpath (see process_meta)
+            url = article.name.rsplit('.', 1)[0] + '.html'
 
             date_str = ''
             if art_date:

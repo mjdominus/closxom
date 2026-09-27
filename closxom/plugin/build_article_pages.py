@@ -29,18 +29,13 @@ class BuildArticlePagesPlugin(Plugin):
 
         pages_created = 0
         for article in articles:
-            # Determine output path from article relpath
-            # e.g., "tech/foo.txt" -> "tech/foo.html"
-            relpath = article.meta.get('relpath', '')
-            if relpath:
-                # Replace extension with .html
-                output_path = relpath.rsplit('.', 1)[0] + '.html'
-            else:
-                output_path = f"article_{article.id}.html"
+            # article.name is the source file's relpath (see process_meta),
+            # e.g. "tech/foo.txt" -> "tech/foo.html"
+            output_path = article.name.rsplit('.', 1)[0] + '.html'
 
             # Create page skrap
             page = PageSkrap(
-                name=f"page:{relpath}",
+                name=f"page:{article.name}",
                 owner=self.name(),
                 meta={
                     'article_ids': [article.id],
