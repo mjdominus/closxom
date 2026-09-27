@@ -6,6 +6,13 @@ from datetime import datetime, timezone
 class UnimplementedMethod(Exception):
     pass
 
+class ArticleFailed(Exception):
+    """Raised by Plugin.fail_article. Placeholder until the real
+    failure-tracking design lands (log, set published=0, append to an
+    end-of-run failure report, nonzero build exit - see TODO.md); for
+    now this just aborts the run."""
+    pass
+
 class _OwnerBoundDB():
     """Wraps a DB so that save_skrap implicitly attributes meta writes
     to the wrapped plugin's name, without every plugin having to pass
@@ -191,6 +198,17 @@ class Plugin():
         if changed:
             self.db.save_skrap(skrap)
         return changed
+
+    def fail_article(self, article, message):
+        """Fail article with message.
+
+        Trivial placeholder for the real behavior (log, set
+        published=0, append to an end-of-run failure report, nonzero
+        build exit): for now this just logs and raises, aborting the
+        whole run.
+        """
+        self.log.error("%s: %s", article.name, message)
+        raise ArticleFailed(f"{article.name}: {message}")
 
     def __str__(self):
         return f"<plugin {self.name()}>"
