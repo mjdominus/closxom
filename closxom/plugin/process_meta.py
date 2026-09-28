@@ -1,14 +1,25 @@
-"""Plugin to parse META sections from articles."""
+"""Plugin to create/update ArticleSkrap products from FileSkrap sources."""
 
 import re
 from closxom.plugin.base import Plugin
 
 
 class ProcessMetaPlugin(Plugin):
-    """Parses META sections from article content.
+    """Creates or updates one ArticleSkrap per FileSkrap, generating it
+    directly from the file's raw content rather than copying it in one
+    pass and mutating it in a later one.
 
-    Processes ArticleSkrap products, extracting META headers and
-    separating them from the content. Updates articles in place.
+    An article's name always equals its source file's relpath, so the
+    FileSkrap found by (owner="scanfiles", name=target) is its one
+    dependency - no separate path/relpath/file_mtime bookkeeping is kept
+    on the article; downstream consumers use the article's own name.
+
+    Parses the leading META section into meta via reconcile_meta and
+    leaves article.content as the body only - never the raw,
+    META-prefixed source. Every article is expected to have a META
+    section by the time it reaches Closxom (b2c normalizes any that
+    lack one); a missing META section, or one with no title:, fails the
+    article via Plugin.fail_article.
     """
 
     @classmethod
@@ -17,54 +28,59 @@ class ProcessMetaPlugin(Plugin):
 
     @classmethod
     def inputs(cls):
-        return ["article"]
+        return ["file"]
 
     @classmethod
     def outputs(cls):
-        return []  # Modifies articles in place
+        return ["article"]
 
-    def run(self):
-        """Parse META sections from all articles."""
-        articles = self.db.find_all_skrap_by_type("article")
+    def default_target_list(self):
+        return [f.name for f in self.db.find_all_skrap_by_type("file")]
 
-        processed = 0
-        for article in articles:
-            content = article.content or ''
+    def dependencies_of(self, target):
+        file_skrap = self.db.find_skrap_by_name("scanfiles", target)
+        return [file_skrap] if file_skrap else []
 
-            # Check if content starts with META
-            if content.startswith('META\n'):
-                meta_dict, body = self.parse_meta(content)
+    def build_target(self, target):
+        file_skrap = self.db.find_skrap_by_name("scanfiles", target)
+        if file_skrap is None:
+            self.log.warning("No file skrap for target %r", target)
+            return
 
-                # 'published' is a distinct key from the resolver's derived
-                # 'pubdate'/'published' (see notes/redesign-decisions.md,
-                # "Meta key provenance": one writer per key). Reconciled
-                # explicitly (rather than via .update()) so deleting the
-                # published: line from the source file actually clears a
-                # stale value, which is how an article is unpublished.
-                if 'published' in meta_dict:
-                    article.meta['published_raw'] = meta_dict.pop('published')
-                else:
-                    article.meta.pop('published_raw', None)
+        if file_skrap.content is None:
+            self.log.warning("File skrap %r has no content; skipping", target)
+            return
 
-                # Update article metadata
-                article.meta.update(meta_dict)
-                article.content = body
+        article = self.db.find_or_create_skrap("article", target, self.name())
+        old_content = article.content
+        raw = file_skrap.content
 
-                # If no title was found in META, use first line of body
-                if 'title' not in article.meta and body:
-                    first_line = body.split('\n', 1)[0].strip()
-                    if first_line:
-                        article.meta['title'] = first_line
+        # Every article has a META section by the time it reaches Closxom
+        # (b2c normalizes any that lack one) - see notes/redesign-decisions.md,
+        # "Articles with no META section".
+        if not raw.startswith('META\n'):
+            self.fail_article(article, "no META section found")
 
-            else:
-                # No META section - use first line as title
-                first_line = content.split('\n', 1)[0].strip() if content else 'Untitled'
-                article.meta['title'] = first_line
+        meta_dict, body = self.parse_meta(raw)
 
+        # 'published' is a distinct key from the resolver's derived
+        # 'pubdate'/'published' (see notes/redesign-decisions.md,
+        # "Meta key provenance": one writer per key).
+        if 'published' in meta_dict:
+            meta_dict['published_raw'] = meta_dict.pop('published')
+
+        if 'title' not in meta_dict:
+            self.fail_article(article, "META section has no title:")
+
+        article.content = body
+
+        # reconcile_meta reconciles process-meta's own authored keys
+        # (adding, updating, and deleting exactly what changed) and
+        # saves iff they did; a body edit with no META change still
+        # needs its own save.
+        meta_changed = self.reconcile_meta(article, meta_dict)
+        if article.content != old_content and not meta_changed:
             self.db.save_skrap(article)
-            processed += 1
-
-        return processed
 
     def parse_meta(self, content):
         """Parse META section from content.

@@ -31,16 +31,21 @@ tracked as `lt` threads.
   - [x] `reconcile_meta(skrap, new_dict)` base-class helper
   - [ ] (later) `skrap.meta` as a guarded merged mapping that raises on a
         foreign-key mutation
-- [ ] Rework `process_meta`
-  - [ ] split the META block from the body; write the body to a separate `body`
-        field and leave `content` pristine
-  - [ ] expose the raw `published:` string; no date parsing here
-  - [ ] hard-reject a META section with no `title:`
-  - [ ] use `reconcile_meta` for its authored keys
-  - [ ] stop resaving every article every run
-- [ ] `fail_article(article, message)` base-class helper: log, set
-      `published=0`, append to an end-of-run failure report; build exits nonzero
-      if any article failed
+- [x] Rework `process_meta`
+  - [x] `process_meta` now generates each `ArticleSkrap` itself, straight from
+        the source `FileSkrap`'s raw content (absorbing `readfiles`, now
+        deleted); `content` is always the body only, never the raw
+        META-prefixed source, so there's no separate `body` field
+  - [x] expose the raw `published:` string; no date parsing here
+  - [x] hard-reject a META section with no `title:` (also a missing META
+        section entirely - see redesign-decisions.md "Articles with no META
+        section")
+  - [x] use `reconcile_meta` for its authored keys
+  - [x] stop resaving every article every run
+- [ ] `fail_article(article, message)` base-class helper
+  - [x] trivial version: logs and raises, aborting the run
+  - [ ] real behavior: set `published=0`, append to an end-of-run failure
+        report; build exits nonzero if any article failed
 - [ ] Publication-resolver plugin (what `compute_dates` becomes)
   - [ ] parse and validate the raw `published:` string via the timezone helper
   - [ ] emit `pubdate`; on a malformed value raise, caught per-article
@@ -71,8 +76,7 @@ tracked as `lt` threads.
 
 Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 
-- [x] `readfiles`
-- [ ] `process_meta`
+- [x] `process_meta` (absorbed `readfiles`, which no longer exists)
 - [ ] `compute_dates` / publication-resolver
 - [ ] `build_article_pages`
 - [ ] `build_date_archives`

@@ -13,7 +13,6 @@ from closxom import logconfig
 from closxom.pubdate import InvalidInstantValue, resolve_time
 
 from closxom.plugin.scanfiles import ScanFilesPlugin
-from closxom.plugin.readfiles import ReadFilesPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.resolve_publication import ResolvePublicationPlugin
 from closxom.plugin.build_article_pages import BuildArticlePagesPlugin
@@ -26,7 +25,6 @@ PLUGINS = {
     cls.name(): cls
     for cls in [
         ScanFilesPlugin,
-        ReadFilesPlugin,
         ProcessMetaPlugin,
         ResolvePublicationPlugin,
         BuildArticlePagesPlugin,
