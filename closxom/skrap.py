@@ -63,10 +63,6 @@ class Skrap():
         self.meta = meta
         self.content = content
 
-    def persist(self, db, owner):
-        """Save this skrap to the database, attributing meta writes to owner."""
-        return db.save_skrap(self, owner=owner)
-
     def set_last_updated(self, last_updated=None):
         """Set the last_updated timestamp (when this record was last written).
 
