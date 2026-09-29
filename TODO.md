@@ -46,11 +46,21 @@ tracked as `lt` threads.
   - [x] trivial version: logs and raises, aborting the run
   - [ ] real behavior: set `published=0`, append to an end-of-run failure
         report; build exits nonzero if any article failed
-- [ ] Publication-resolver plugin (what `compute_dates` becomes)
-  - [ ] parse and validate the raw `published:` string via the timezone helper
-  - [ ] emit `pubdate`; on a malformed value raise, caught per-article
-  - [ ] set `published` from `pubdate <= now`
-  - [ ] must run after `process_meta` (needs an explicit ordering mechanism)
+- [x] Publication-resolver plugin (what `compute_dates` becomes; now
+      `resolve_publication`)
+  - [x] parse and validate the raw `published:` string via the timezone helper
+  - [x] emit `pubdate`; on a malformed value, logged and treated as absent
+  - [x] set `published` from `pubdate <= now`
+  - [x] runs after `process_meta` automatically (inputs/outputs dependency
+        graph; no separate ordering mechanism needed)
+  - [x] creates/updates its own `PublicationSkrap` (named after, and
+        dependent on, its `ArticleSkrap`) instead of writing `pubdate`/
+        `published` onto the article - resolves the meta-provenance
+        ownership conflict and lets it use the standard target/dependency
+        API (see "Plugin API conversion" below)
+  - [ ] (deferred, `lt` vbstr7) a `PublicationSkrap` is only reconsidered
+        when its article changes; a future `pubdate` does not by itself
+        flip `published` on a later build merely because time passed
 - [x] Delete `notyet`: the plugin, `test/plugin/test_notyet.py`, orchestrator/
       `genblog` registration, and `has_notyet` recording in `scanfiles` were
       already gone (`f4fc29e`, before this TODO item was last touched)
@@ -77,7 +87,8 @@ tracked as `lt` threads.
 Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 
 - [x] `process_meta` (absorbed `readfiles`, which no longer exists)
-- [ ] `compute_dates` / publication-resolver
+- [x] `resolve_publication` (via its own `PublicationSkrap`, not by
+      annotating the article - see above)
 - [ ] `build_article_pages`
 - [ ] `build_date_archives`
 - [ ] `build_topic_archives`

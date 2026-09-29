@@ -104,16 +104,28 @@ class ArticleSkrap(Skrap):
         title: Article title
         tags: List of tags
         published_raw: Raw `published:` META string, owned by process_meta
-        pubdate: Parsed publication instant (UTC ISO-8601), or absent
-        published: 0/1, recomputed each build from pubdate <= now
-        path: Original file path
     """
     @classmethod
     def typ(cls):
         return "article"
 
+
+@register_skrap_type
+class PublicationSkrap(Skrap):
+    """Represents an article's publication state, as resolved by
+    resolve_publication. Named after (and dependent on) the ArticleSkrap
+    it pertains to; has no content of its own.
+
+    Metadata keys:
+        pubdate: Parsed publication instant (UTC ISO-8601), or absent
+        published: 0/1, recomputed each build from pubdate <= now
+    """
+    @classmethod
+    def typ(cls):
+        return "publication"
+
     def is_published(self):
-        return self.meta['published']
+        return bool(self.meta.get('published'))
 
 
 @register_skrap_type

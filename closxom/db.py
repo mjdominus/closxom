@@ -137,8 +137,18 @@ class DB():
         return [self._skrap_from_row(row) for row in c.fetchall()]
 
     def find_all_published_articles(self):
-        """Find all published article skrap objects."""
-        return [art for art in self.find_all_skrap_by_type('article') if art.is_published()]
+        """Find all published article skrap objects.
+
+        An article is published if its PublicationSkrap (matched by
+        name, owned by resolve-publication) says so; an article with no
+        PublicationSkrap yet is unpublished.
+        """
+        result = []
+        for article in self.find_all_skrap_by_type('article'):
+            publication = self.find_skrap_by_name('resolve-publication', article.name)
+            if publication is not None and publication.is_published():
+                result.append(article)
+        return result
 
     def _plugin_name(self, plugin_id):
         """Look up a plugin's name by its database id, or None if no
