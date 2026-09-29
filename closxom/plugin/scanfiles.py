@@ -41,16 +41,21 @@ class ScanFilesPlugin(Plugin):
         if not self.input_dir.exists():
             raise FileNotFoundError(f"Input directory not found: {self.input_dir}")
 
-        # Find all files (excluding dotfiles and notyet markers)
         files_updated = 0
         for path in self.input_dir.rglob("*"):
             if not path.is_file():
                 continue
 
-            # Skip dotfiles and .notyet files
             if path.name.startswith('.'):
                 continue
+
             if path.name.endswith('.notyet'):
+                # .notyet files are Blosxom-era drafts; b2c eliminates them
+                # during conversion, so one surviving here is stray cruft.
+                self.log.warning("Ignoring stray .notyet file: %s", path)
+                continue
+
+            if path.suffix != '.blog':
                 continue
 
             relpath = path.relative_to(self.input_dir)

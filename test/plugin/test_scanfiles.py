@@ -63,9 +63,23 @@ def test_scanfiles_skips_unchanged_file(skrapdb, articles_dir):
     assert first_last_updated == second_last_updated
 
 
-def test_scanfiles_ignores_notyet_marker_file(skrapdb, articles_dir):
+def test_scanfiles_warns_on_stray_notyet_file(skrapdb, articles_dir, caplog):
     (articles_dir / "foo.blog").write_text("original content")
     (articles_dir / "foo.blog.notyet").touch()
+
+    with caplog.at_level("WARNING"):
+        ScanFilesPlugin(skrapdb, {'input_dir': str(articles_dir)}).run()
+
+    files = skrapdb.find_all_skrap_by_type("file")
+    assert len(files) == 1
+    assert files[0].name == "foo.blog"
+    assert any("notyet" in record.message for record in caplog.records)
+
+
+def test_scanfiles_ignores_non_blog_files(skrapdb, articles_dir):
+    (articles_dir / "foo.blog").write_text("kept")
+    (articles_dir / "README.txt").write_text("ignored")
+    (articles_dir / "notes").write_text("ignored, no extension")
 
     ScanFilesPlugin(skrapdb, {'input_dir': str(articles_dir)}).run()
 

@@ -51,10 +51,10 @@ tracked as `lt` threads.
   - [ ] emit `pubdate`; on a malformed value raise, caught per-article
   - [ ] set `published` from `pubdate <= now`
   - [ ] must run after `process_meta` (needs an explicit ordering mechanism)
-- [ ] Delete `notyet` (same commit as the resolver): the plugin,
-      `test/plugin/test_notyet.py`, `test_scanfiles_detects_notyet_marker`,
-      orchestrator/`genblog` registration, `has_notyet` recording in `scanfiles`
-- [ ] `scanfiles`: tighten the walk to `*.blog`; warn on any stray `.notyet`
+- [x] Delete `notyet`: the plugin, `test/plugin/test_notyet.py`, orchestrator/
+      `genblog` registration, and `has_notyet` recording in `scanfiles` were
+      already gone (`f4fc29e`, before this TODO item was last touched)
+- [x] `scanfiles`: tighten the walk to `*.blog`; warn on any stray `.notyet`
 - [ ] Write `b2c` (Blosxom -> Closxom converter)
   - [ ] read `/workspace/blosxom-articles`; write a fresh Closxom tree
   - [ ] normalize every article to a META section (`title:` from the first line
