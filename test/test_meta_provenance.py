@@ -70,6 +70,34 @@ def test_deleting_foreign_owned_key_raises(skrapdb):
     assert skrapdb.meta_keys_owned_by(survivor, "plugin-a") == {'x'}
 
 
+def test_row_owner_can_clear_a_foreign_owned_key(skrapdb):
+    s = _fresh_skrap(skrapdb)
+    b = _B(skrapdb, {})
+    b.update_skrap_meta(s, x=1)
+
+    reloaded = skrapdb.find_skrap_by_name("creator", "s")
+    del reloaded.meta['x']
+    skrapdb.save_skrap(reloaded, owner="creator")  # the skrap's own row owner
+
+    survivor = skrapdb.find_skrap_by_name("creator", "s")
+    assert 'x' not in survivor.meta
+
+
+def test_row_owner_cannot_mutate_a_foreign_owned_key(skrapdb):
+    s = _fresh_skrap(skrapdb)
+    b = _B(skrapdb, {})
+    b.update_skrap_meta(s, x=1)
+
+    reloaded = skrapdb.find_skrap_by_name("creator", "s")
+    reloaded.meta['x'] = 999
+
+    with pytest.raises(ForeignMetaWrite):
+        skrapdb.save_skrap(reloaded, owner="creator")
+
+    unchanged = skrapdb.find_skrap_by_name("creator", "s")
+    assert unchanged.meta['x'] == 1
+
+
 def test_reconcile_meta_adds_updates_and_deletes_only_own_keys(skrapdb):
     s = _fresh_skrap(skrapdb)
     a, b = _A(skrapdb, {}), _B(skrapdb, {})

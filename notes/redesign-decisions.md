@@ -84,6 +84,21 @@ threads.
   writes go through `update_skrap_meta` / `set_skrap_meta_defaults` /
   `set_meta` / `reconcile_meta`, all carrying `self.name()`.
 
+**UPDATE 2026-09-30:** every skrap type in the pipeline as actually built turned
+out single-owner (the `ArticleSkrap`/`resolve_publication` conflict that
+motivated this feature was resolved differently, by giving `resolve_publication`
+its own `PublicationSkrap` instead — see "Publication resolver" below). Revisiting
+whether per-key provenance is worth keeping at all is `lt` `2026-09-29-w7nqqb`.
+Pending that, one refinement is in: **the skrap's own row owner (`skrap.owner`)
+may *clear* - but not mutate the value of - a meta key owned by a different
+plugin.** Deleting a foreign-owned key still raises for any other caller;
+changing a foreign-owned key's value always raises, even for the row owner.
+Motivated by planned content-mutator plugins (macro expansion, etc., mutating
+`ArticleSkrap.content` in place, each marking its own progress with a meta key)
+needing `process_meta` to clear every mutator's marker when it regenerates an
+article from scratch, without `process_meta` being able to silently overwrite
+a mutator's value.
+
 ## Publication model
 
 Publication state is two fields:

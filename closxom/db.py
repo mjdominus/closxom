@@ -264,7 +264,8 @@ class DB():
 
         owner_id = self.ensure_plugin_registered(o.owner)
         meta_owner_id = self.ensure_plugin_registered(owner)
-        existing_meta = self._validate_meta_ownership(o, meta_owner_id)
+        is_row_owner = meta_owner_id == owner_id
+        existing_meta = self._validate_meta_ownership(o, meta_owner_id, is_row_owner)
 
         if o.id is None:
             # Insert new skrap
@@ -285,7 +286,7 @@ class DB():
                 WHERE id = ?
             """, (o.name, o.type, owner_id, o.last_updated, o.content, o.id))
 
-        self._write_meta(o, meta_owner_id, existing_meta)
+        self._write_meta(o, meta_owner_id, existing_meta, is_row_owner)
         self.conn.commit()
 
         logger.info("Saved skrap %s (%r) owned by plugin %r",
@@ -293,10 +294,14 @@ class DB():
 
         return o.id
 
-    def _validate_meta_ownership(self, o, owner_id):
-        """Check that o.meta does not change or remove any key owned by
-        a plugin other than owner_id, raising ForeignMetaWrite if it
-        does. Returns the current (owner_id, value) per meta key, for
+    def _validate_meta_ownership(self, o, owner_id, is_row_owner):
+        """Check that o.meta does not change the value of any key owned
+        by a different plugin, raising ForeignMetaWrite if it does.
+        Removing a foreign-owned key is allowed only if is_row_owner is
+        `True` - the skrap's own row owner may clear another plugin's key,
+        may not mutate its value; no other caller may do either.
+
+        Returns the current (owner_id, value) per meta key, for
         _write_meta to apply afterward - empty if o is not yet saved.
         """
         if o.id is None:
@@ -310,32 +315,44 @@ class DB():
         }
 
         for k, (existing_owner_id, existing_v) in existing.items():
-            if existing_owner_id != owner_id and (k not in o.meta or o.meta[k] != existing_v):
+            if existing_owner_id == owner_id:
+                continue
+            if k in o.meta:
+                if o.meta[k] != existing_v:
+                    owner_desc = self._plugin_name(existing_owner_id) or existing_owner_id
+                    raise ForeignMetaWrite(
+                        f"skrap {o.id} ({o.name!r}): cannot change meta key "
+                        f"{k!r}, owned by plugin {owner_desc!r}")
+            elif not is_row_owner:
                 owner_desc = self._plugin_name(existing_owner_id) or existing_owner_id
                 raise ForeignMetaWrite(
-                    f"skrap {o.id} ({o.name!r}): cannot change meta key "
+                    f"skrap {o.id} ({o.name!r}): cannot remove meta key "
                     f"{k!r}, owned by plugin {owner_desc!r}")
 
         return existing
 
-    def _write_meta(self, o, owner_id, existing):
+    def _write_meta(self, o, owner_id, existing, is_row_owner):
         """Apply o.meta to the meta table for owner_id, given the
         existing (owner_id, value) per key from _validate_meta_ownership.
         Assumes validation already passed: a row owned by owner_id is
         deleted if its key is absent from o.meta, or updated if o.meta's
-        value for it differs; a row owned by a different plugin is left
-        alone; a key in o.meta with no existing row is inserted fresh.
+        value for it differs; a foreign-owned row absent from o.meta is
+        deleted too, but only if is_row_owner; any other foreign-owned
+        row is left alone; a key in o.meta with no existing row is
+        inserted fresh.
         """
         for k, (existing_owner_id, existing_v) in existing.items():
-            if existing_owner_id != owner_id:
-                continue
-            if k not in o.meta:
+            if existing_owner_id == owner_id:
+                if k not in o.meta:
+                    self.conn.execute(
+                        "DELETE FROM meta WHERE skrap_id = ? AND k = ?", (o.id, k))
+                elif o.meta[k] != existing_v:
+                    self.conn.execute(
+                        "UPDATE meta SET v = ? WHERE skrap_id = ? AND k = ?",
+                        (self._serialize_meta_value(o.meta[k]), o.id, k))
+            elif is_row_owner and k not in o.meta:
                 self.conn.execute(
                     "DELETE FROM meta WHERE skrap_id = ? AND k = ?", (o.id, k))
-            elif o.meta[k] != existing_v:
-                self.conn.execute(
-                    "UPDATE meta SET v = ? WHERE skrap_id = ? AND k = ?",
-                    (self._serialize_meta_value(o.meta[k]), o.id, k))
 
         for k, v in o.meta.items():
             if k not in existing:

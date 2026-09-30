@@ -112,6 +112,26 @@ Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 - [ ] then: `build_article_pages.py:41` `relpath.rsplit('.', 1)[0] + '.html'`
       -> `relpath.with_suffix('.html')`
 
+## Content mutator plugins
+
+Plugins that rewrite `ArticleSkrap.content` in place (macro expansion, `WPREF/foo`
+-> Wikipedia URLs, `<book>...</book>` expansion from a book database, probably
+others). See `notes/redesign-decisions.md`, "Meta key provenance" UPDATE
+2026-09-30, for the design.
+
+- [x] DB permits a skrap's own row owner to clear (not mutate) a meta key
+      owned by a different plugin
+- [ ] each mutator marks its own progress with a meta key it owns, called a
+      "footprint": a flag, or a content hash, to also skip re-running
+      expensive ones cheaply
+- [ ] `process_meta` clears every mutator's footprint when it regenerates an
+      article's content from scratch (via the row-owner-clear permission above)
+- [ ] first mutator plugin: macro expansion
+- [ ] `WPREF/foo` -> `https://en.wikipedia.org/wiki/foo` link rewriting
+- [ ] `<book>...</book>` expansion from a book database
+- [ ] ordering between mutators, if it ever turns out to matter for a specific
+      pair (most are expected to commute); deferred, no mechanism needed yet
+
 ## Features
 
 - [ ] Markdown rendering via `mistune`
