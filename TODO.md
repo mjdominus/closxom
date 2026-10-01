@@ -89,12 +89,30 @@ Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 - [x] `process_meta` (absorbed `readfiles`, which no longer exists)
 - [x] `resolve_publication` (via its own `PublicationSkrap`, not by
       annotating the article - see above)
-- [ ] `build_article_pages`
-- [ ] `build_date_archives`
-- [ ] `build_topic_archives`
-- [ ] `build_main_page`
+- `build_article_pages` / `build_date_archives` / `build_topic_archives` /
+  `build_main_page` deleted 2026-10-01 - see "Page building plugins" below
 - [ ] `write_html`
 - `scanfiles` is intentionally exempt (filesystem boundary; overrides `run()`).
+
+## Page building plugins
+
+`build_article_pages`, `build_date_archives`, `build_topic_archives`, and
+`build_main_page` were deleted 2026-10-01: pre-date the `.content`/provenance/
+target-dependency design (every one always constructed a fresh `PageSkrap`
+instead of find-or-create, so each crashed on `UNIQUE constraint failed` the
+first time it was rerun against any published article - confirmed by actually
+running `genblog` twice), had zero test coverage, and three of the four sorted
+by an `article.meta['date']` key nothing has ever written. Not worth patching;
+redo from scratch.
+
+- [ ] blocked on Markdown rendering: these plugins insert article content into
+      templates, which means they need rendered HTML, not raw Markdown - don't
+      start until the Markdown-rendering plugin (see "Features" below) exists
+- [ ] open question, doesn't need deciding yet: does a page get planned and
+      built in one step ("write_year_archive_page" producing the page
+      directly), or does a separate family of planner plugins first produce a
+      "Plan" skrap ("fill template X with values {...} and the contents of
+      skraps s1, s2, ...") for a later, single HTML-writing plugin to execute?
 
 ## Incremental rebuild
 
@@ -109,8 +127,6 @@ Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
 ## Metadata typing
 
 - [ ] typed meta values (default `string`; also `pathlib.Path`, `int`, ...)
-- [ ] then: `build_article_pages.py:41` `relpath.rsplit('.', 1)[0] + '.html'`
-      -> `relpath.with_suffix('.html')`
 
 ## Content mutator plugins
 
@@ -134,7 +150,14 @@ others). See `notes/redesign-decisions.md`, "Meta key provenance" UPDATE
 
 ## Features
 
-- [ ] Markdown rendering via `mistune`
+- [ ] Markdown rendering via `mistune` - the "formatter" plugin
+  - [ ] handle `formatter: markdown` (render via `mistune`) and `formatter: raw`
+        (pass through unchanged) - `b2c` recognizes source files already
+        written in raw HTML and stamps `formatter: raw` on them, so the
+        formatter plugin must handle both, not just assume Markdown
+  - [ ] result is a new skrap of a new type (tentatively `HTMLSkrap`),
+        depending on the `ArticleSkrap`, not a mutation of it - same reasoning
+        as `PublicationSkrap`
 - [ ] RSS/Atom feed generation
 - [ ] templating engine (replace the hardcoded HTML strings in `write_html.py`)
 - [ ] asset handling (images, CSS, JS)

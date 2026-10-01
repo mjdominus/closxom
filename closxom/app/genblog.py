@@ -16,10 +16,6 @@ from closxom.pubdate import InvalidInstantValue, resolve_time
 from closxom.plugin.scanfiles import ScanFilesPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.resolve_publication import ResolvePublicationPlugin
-from closxom.plugin.build_article_pages import BuildArticlePagesPlugin
-from closxom.plugin.build_date_archives import BuildDateArchivesPlugin
-from closxom.plugin.build_topic_archives import BuildTopicArchivesPlugin
-from closxom.plugin.build_main_page import BuildMainPagePlugin
 from closxom.plugin.write_html import WriteHtmlPlugin
 
 
@@ -95,11 +91,8 @@ def run(argv=None):
     orchestrator.register(ProcessMetaPlugin)
     orchestrator.register(ResolvePublicationPlugin)
 
-    # Page building plugins
-    orchestrator.register(BuildArticlePagesPlugin)
-    orchestrator.register(BuildDateArchivesPlugin)
-    orchestrator.register(BuildTopicArchivesPlugin)
-    orchestrator.register(BuildMainPagePlugin)
+    # Page building plugins: deleted pending redesign (see TODO.md,
+    # "Page building plugins") - none are registered right now.
 
     # Output plugins
     orchestrator.register(WriteHtmlPlugin)

@@ -5,10 +5,6 @@ breaks silently only when actually orchestrated - so pin it here instead."""
 
 from datetime import datetime, timezone
 
-from closxom.plugin.build_article_pages import BuildArticlePagesPlugin
-from closxom.plugin.build_date_archives import BuildDateArchivesPlugin
-from closxom.plugin.build_main_page import BuildMainPagePlugin
-from closxom.plugin.build_topic_archives import BuildTopicArchivesPlugin
 from closxom.plugin.resolve_publication import ResolvePublicationPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.scanfiles import ScanFilesPlugin
@@ -18,10 +14,6 @@ ALL_PLUGINS = [
     ScanFilesPlugin,
     ProcessMetaPlugin,
     ResolvePublicationPlugin,
-    BuildArticlePagesPlugin,
-    BuildDateArchivesPlugin,
-    BuildTopicArchivesPlugin,
-    BuildMainPagePlugin,
     WriteHtmlPlugin,
 ]
 
