@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from closxom.plugin.resolve_publication import ResolvePublicationPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
+from closxom.plugin.formatter import FormatterPlugin
 from closxom.plugin.scanfiles import ScanFilesPlugin
 from closxom.plugin.write_html import WriteHtmlPlugin
 
@@ -14,6 +15,7 @@ ALL_PLUGINS = [
     ScanFilesPlugin,
     ProcessMetaPlugin,
     ResolvePublicationPlugin,
+    FormatterPlugin,
     WriteHtmlPlugin,
 ]
 

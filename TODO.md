@@ -150,12 +150,12 @@ others). See `notes/redesign-decisions.md`, "Meta key provenance" UPDATE
 
 ## Features
 
-- [ ] Markdown rendering via `mistune` - the "formatter" plugin
-  - [ ] handle `formatter: markdown` (render via `mistune`) and `formatter: raw`
-        (pass through unchanged) - `b2c` recognizes source files already
-        written in raw HTML and stamps `formatter: raw` on them, so the
-        formatter plugin must handle both, not just assume Markdown
-  - [ ] result is a new skrap of a new type (tentatively `HTMLSkrap`),
+- [x] Markdown rendering via `mistune` - the "formatter" plugin
+  - [x] handle `formatter: markdown` (render via `mistune`), explicit or
+        absent (the default), and `formatter: raw` (pass through unchanged,
+        for source files `b2c` recognizes as already being HTML); any other
+        value fails the article
+  - [x] result is a new skrap of a new type (tentatively `HTMLSkrap`),
         depending on the `ArticleSkrap`, not a mutation of it - same reasoning
         as `PublicationSkrap`
 - [ ] RSS/Atom feed generation

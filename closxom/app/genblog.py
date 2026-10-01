@@ -16,6 +16,7 @@ from closxom.pubdate import InvalidInstantValue, resolve_time
 from closxom.plugin.scanfiles import ScanFilesPlugin
 from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.resolve_publication import ResolvePublicationPlugin
+from closxom.plugin.formatter import FormatterPlugin
 from closxom.plugin.write_html import WriteHtmlPlugin
 
 
@@ -90,6 +91,7 @@ def run(argv=None):
     # Article processing plugins
     orchestrator.register(ProcessMetaPlugin)
     orchestrator.register(ResolvePublicationPlugin)
+    orchestrator.register(FormatterPlugin)
 
     # Page building plugins: deleted pending redesign (see TODO.md,
     # "Page building plugins") - none are registered right now.

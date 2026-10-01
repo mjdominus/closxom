@@ -129,6 +129,18 @@ class PublicationSkrap(Skrap):
 
 
 @register_skrap_type
+class HTMLSkrap(Skrap):
+    """Represents an article's rendered-to-HTML body, as produced by the
+    formatter plugin. Named after (and dependent on) the ArticleSkrap it
+    pertains to. content is the rendered HTML body - never the raw
+    Markdown/HTML source.
+    """
+    @classmethod
+    def typ(cls):
+        return "html"
+
+
+@register_skrap_type
 class PageSkrap(Skrap):
     """Represents an output page (single article, archive, etc.).
 
