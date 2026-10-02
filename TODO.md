@@ -105,14 +105,29 @@ running `genblog` twice), had zero test coverage, and three of the four sorted
 by an `article.meta['date']` key nothing has ever written. Not worth patching;
 redo from scratch.
 
-- [ ] blocked on Markdown rendering: these plugins insert article content into
-      templates, which means they need rendered HTML, not raw Markdown - don't
-      start until the Markdown-rendering plugin (see "Features" below) exists
-- [ ] open question, doesn't need deciding yet: does a page get planned and
-      built in one step ("write_year_archive_page" producing the page
-      directly), or does a separate family of planner plugins first produce a
-      "Plan" skrap ("fill template X with values {...} and the contents of
-      skraps s1, s2, ...") for a later, single HTML-writing plugin to execute?
+- [x] decided 2026-10-01/02: a separate family of planner plugins first
+      produces a `PlanSkrap` ("fill template X with values {...} and the
+      contents of skraps s1, s2, ..."), named for the *output* file it
+      pertains to (not any input file - a plan doesn't map one-to-one with
+      input files; archive/feed plans aggregate many), for `write_html` (and
+      eventually `write_rss`/`write_atom`) to execute. `plan-article-page`
+      (single-article page) implemented 2026-10-02 as the first instance -
+      see `closxom/plugin/plan_article_page.py`
+  - [ ] still needed: `write_html` rewrite to consume `plan` instead of the
+        old `page` shape - read `HTMLSkrap.content` (not `ArticleSkrap.
+        content`), stop double-escaping already-rendered HTML, compare
+        `plan.last_updated` against the output file's own mtime for
+        staleness (overriding `run()`, same shape as `scanfiles`, not the
+        generic target/dependency API - no tracking skrap needed)
+  - [ ] the planner family for aggregating pages (date/topic archives, main
+        page) is still unbuilt; when it is, every `PlanSkrap` it produces
+        must stay format-agnostic ("here's the math-tagged article set and
+        its relevant data"), not shaped around what an HTML template
+        happens to need - confirmed 2026-10-02 that `write_rss`/`write_atom`
+        (see "Features" below) will consume the *same* Plan skraps as
+        `write_html` for these aggregating pages, not a separate planner;
+        `plan-article-page` is exempt from this, there being no per-article
+        feed entry file
 
 ## Incremental rebuild
 

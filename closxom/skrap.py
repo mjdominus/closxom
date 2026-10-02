@@ -141,6 +141,31 @@ class HTMLSkrap(Skrap):
 
 
 @register_skrap_type
+class PlanSkrap(Skrap):
+    """Represents a plan for one output page: fill template with values
+    and the contents of the skraps listed in built_from. Named after its
+    output file, not any input file - a plan does not map one-to-one
+    with input files (an archive page aggregates many), so from here on
+    skraps are named for the output they pertain to. Has no content of
+    its own; write_html executes the plan.
+
+    Metadata keys:
+        template: which template to fill, e.g. "single_article"
+        values: dict of plain substitution values for the template
+        built_from: list of {owner, name} refs to skraps whose .content
+            gets inserted into the template - the uniform "what was I
+            built from" field (see notes/redesign-decisions.md and
+            `lt` yhhrg5), used to detect a vanished input later
+        output_path: where to write the HTML file (same as name today,
+            but kept explicit since name-equals-path is only a
+            convention, not a rule)
+    """
+    @classmethod
+    def typ(cls):
+        return "plan"
+
+
+@register_skrap_type
 class PageSkrap(Skrap):
     """Represents an output page (single article, archive, etc.).
 
