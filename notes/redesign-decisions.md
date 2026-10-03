@@ -251,6 +251,23 @@ Two fields and one decision table replace all of that.
 - Consumers that order by date (e.g. `build_main_page`) must parse the ISO string
   to a `datetime` before comparing or sorting.
 
+## Metadata typing
+
+- Skrap metadata values should carry a type, defaulting to `string` but also
+  supporting things like `pathlib.Path` or `int` — similar in spirit to
+  argparse's `type=` parameter. Currently every meta value is either a plain
+  string or a JSON-decoded dict/list (see "Meta storage" above); nothing
+  carries richer type information, so code that wants to treat a value as
+  something other than text has to fake it with manual string manipulation.
+- Motivating example: `build_article_pages.py:41` did
+  `relpath.rsplit('.', 1)[0] + '.html'` instead of the cleaner
+  `relpath.with_suffix('.html')`, only possible once the value is an actual
+  `pathlib.Path` rather than a plain string. That file is gone (deleted with
+  the other `build_*` page plugins, 2026-10-01), but the identical pattern
+  has already recurred: `plan_article_page.py`'s `_output_name` does
+  `article.name.rsplit('.', 1)[0] + '.html'`.
+- Tracked action item: `TODO.md`, "Metadata typing".
+
 ## Open questions
 
 - **Publication-resolver plugin name** — keep `compute_dates` or rename to

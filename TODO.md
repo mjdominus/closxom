@@ -135,8 +135,12 @@ redo from scratch.
 
 ## Incremental rebuild
 
-- [ ] `skrap_deps` junction table (`skrap_id`, `depends_on_skrap_id`) recording
-      explicit producer -> dependency edges
+- rejected 2026-10-01 (`lt` yhhrg5): a `skrap_deps` junction table
+  (`skrap_id`, `depends_on_skrap_id`) for reverse-lookup ("X disappeared, who
+  depended on it"). Unnecessary: a multi-input planner's `default_target_list()`
+  includes every existing output of its own type, not just ones derivable
+  from current inputs, so an orphaned output stays visited forever and
+  self-detects via its own `built_from` field - no reverse index needed
 - [ ] deletion / tombstoning: mark-deleted flag, staleness propagation,
       `write_html` removing files for tombstoned pages (`lt` yhhrg5)
 - [ ] explicit plugin-ordering config (`A B -> C D`, topologically sorted)
@@ -144,6 +148,8 @@ redo from scratch.
       (`lt` vbstr7)
 
 ## Metadata typing
+
+See `notes/redesign-decisions.md`, "Metadata typing", for why.
 
 - [ ] typed meta values (default `string`; also `pathlib.Path`, `int`, ...)
 
