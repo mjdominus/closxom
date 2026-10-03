@@ -91,8 +91,11 @@ Convert to `default_target_list()` / `dependencies_of()` / `build_target()`.
       annotating the article - see above)
 - `build_article_pages` / `build_date_archives` / `build_topic_archives` /
   `build_main_page` deleted 2026-10-01 - see "Page building plugins" below
-- [ ] `write_html`
 - `scanfiles` is intentionally exempt (filesystem boundary; overrides `run()`).
+- `write_html` is also intentionally exempt, like `scanfiles` - a filesystem
+  boundary in the opposite direction (writing out, not reading in), comparing
+  a plan's `last_updated` against the output file's own mtime instead of the
+  generic skrap-to-skrap dependency check
 
 ## Page building plugins
 
@@ -113,12 +116,13 @@ redo from scratch.
       eventually `write_rss`/`write_atom`) to execute. `plan-article-page`
       (single-article page) implemented 2026-10-02 as the first instance -
       see `closxom/plugin/plan_article_page.py`
-  - [ ] still needed: `write_html` rewrite to consume `plan` instead of the
-        old `page` shape - read `HTMLSkrap.content` (not `ArticleSkrap.
-        content`), stop double-escaping already-rendered HTML, compare
-        `plan.last_updated` against the output file's own mtime for
-        staleness (overriding `run()`, same shape as `scanfiles`, not the
-        generic target/dependency API - no tracking skrap needed)
+  - [x] `write_html` rewritten 2026-10-02 to consume `plan` instead of the
+        old `page` shape: reads `built_from`-referenced skraps' content
+        (not `ArticleSkrap.content`), no longer double-escapes already-
+        rendered HTML, compares `plan.last_updated` against the output
+        file's own mtime for staleness (overriding `run()`, same shape as
+        `scanfiles`, not the generic target/dependency API - no tracking
+        skrap needed). Verified end-to-end against `sample/`.
   - [ ] the planner family for aggregating pages (date/topic archives, main
         page) is still unbuilt; when it is, every `PlanSkrap` it produces
         must stay format-agnostic ("here's the math-tagged article set and
@@ -174,7 +178,8 @@ others). See `notes/redesign-decisions.md`, "Meta key provenance" UPDATE
         depending on the `ArticleSkrap`, not a mutation of it - same reasoning
         as `PublicationSkrap`
 - [ ] RSS/Atom feed generation
-- [ ] templating engine (replace the hardcoded HTML strings in `write_html.py`)
+- [ ] templating engine via Jinja2 (replace the hardcoded HTML strings in
+      `write_html.py`; see `lt` 2026-10-03-8wjbxa)
 - [ ] asset handling (images, CSS, JS)
 
 ## Bugs / cleanup
