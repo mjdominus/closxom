@@ -132,6 +132,41 @@ redo from scratch.
         `write_html` for these aggregating pages, not a separate planner;
         `plan-article-page` is exempt from this, there being no per-article
         feed entry file
+  - [ ] watch for the double-counting bug the deleted `build_topic_archives`
+        had: an article with overlapping `tags` / `topic` / `category`
+        values got counted into the same topic more than once
+  - [ ] aggregating pages needed, confirmed 2026-10-04: year, month, and
+        "source directory" (Blosxom-style directory-as-category, not a META
+        `tags:`/`topic:` key - different grouping than the deleted
+        `build_topic_archives` used). Year and month are the easier pair:
+        every published article has exactly one unambiguous year/month from
+        its already-validated `pubdate`; directory grouping raises real
+        open questions first (does a nested `dir/subdir/article.blog`
+        belong to both archives or just the immediate parent? what about an
+        article with no subdirectory at all?)
+  - [ ] the old blog also has single-*day* aggregate pages (almost always
+        one article, but not always) at URLs like `/2026/04/02.html` - these
+        must keep resolving; fold into the year/month archive work rather
+        than treating it as a fourth, separate thing
+  - [ ] found 2026-10-04, confirmed by actually editing an article's body
+        and rerunning: `plan_article_page` + `write_html` have a real
+        staleness bug. A `PlanSkrap`'s `values`/`built_from` only ever
+        stored a *reference* to the `HTMLSkrap`, never its content, so an
+        article's title/pubdate not changing means the Plan's own meta is
+        byte-identical even when the body did change - `reconcile_meta`
+        sees nothing to save, `plan.last_updated` never advances, and
+        `write_html`'s mtime check wrongly treats the stale output file as
+        current. Fix (also unifies single- and multi-article templates,
+        confirmed 2026-10-04): `values` becomes `{'articles': [{'title',
+        'date', 'content', 'url', ...}, ...]}` - one element for a
+        single-article page, many for an archive - with each `content`
+        already resolved and ready to drop into the template (Jinja2
+        `| safe`) rather than dereferenced later by `write_html`.
+        `built_from` stays a separate list of skrap refs, purely for the
+        deletion-detection purpose (`lt` yhhrg5) - no longer doing double
+        duty as what gets rendered. Needs applying to the already-built
+        `plan_article_page.py`/`write_html.render_single_article`, not just
+        the new aggregating planners.
 
 ## Incremental rebuild
 
@@ -191,7 +226,5 @@ others). See `notes/redesign-decisions.md`, "Meta key provenance" UPDATE
 ## Bugs / cleanup
 
 - [ ] delete or rewrite dead `closxom/article.py`
-- [ ] `build_topic_archives` double-counts articles with overlapping
-      `tags` / `topic` / `category`
 - [ ] `run-plugin`: discover plugins at runtime instead of the hardcoded
       `PLUGINS` dict
