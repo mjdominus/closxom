@@ -15,7 +15,11 @@ def _make_plan(db, name, title="Title", pubdate="2027-01-01T00:00:00+00:00",
     plan = db.find_or_create_skrap("plan", name, "plan-article-page")
     plan.meta.update({
         'template': 'single_article',
-        'values': {'articles': [{
+        # Deliberately mismatched from the article's own title below -
+        # render_single_article must never read this for 'single_article'
+        # (see plan_article_page.py), so a correct render always shows
+        # `title`, never this sentinel.
+        'values': {'title': '(dummy page title, should never render)', 'articles': [{
             'title': title,
             'date': pubdate,
             'content': html_content,

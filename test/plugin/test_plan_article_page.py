@@ -27,12 +27,18 @@ def test_creates_plan_for_published_article(skrapdb):
     plan = _get_plan(skrapdb, "foo.html")
     assert plan is not None
     assert plan.meta['template'] == 'single_article'
-    assert plan.meta['values'] == {'articles': [{
-        'title': 'Foo',
-        'date': '2027-01-01T00:00:00+00:00',
-        'content': '<p>body</p>\n',
-        'url': 'foo.html',
-    }]}
+    assert plan.meta['values'] == {
+        # 'single_article' never reads values['title'] - render_single_article
+        # uses the article's own title instead, see write_html.py - so this
+        # is a deliberate sentinel, not the real title.
+        'title': '(dummy page title)',
+        'articles': [{
+            'title': 'Foo',
+            'date': '2027-01-01T00:00:00+00:00',
+            'content': '<p>body</p>\n',
+            'url': 'foo.html',
+        }],
+    }
     assert plan.meta['built_from'] == [{'owner': 'formatter', 'name': 'foo.blog'}]
     assert plan.meta['output_path'] == 'foo.html'
 

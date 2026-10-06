@@ -50,11 +50,13 @@ class PlanArticlePagePlugin(Plugin):
             self.log.warning("No rendered HTML for %r yet", article.name)
             return
 
+        title = article.meta.get('title', '(no title)')
         new_meta = {
             'template': 'single_article',
             'values': {
+                'title': '(dummy page title)',
                 'articles': [{
-                    'title': article.meta.get('title', 'Untitled'),
+                    'title': title,
                     'date': publication.meta.get('pubdate') if publication else None,
                     'content': html.content or '',
                     'url': target,
