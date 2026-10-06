@@ -15,7 +15,12 @@ def _make_plan(db, name, title="Title", pubdate="2027-01-01T00:00:00+00:00",
     plan = db.find_or_create_skrap("plan", name, "plan-article-page")
     plan.meta.update({
         'template': 'single_article',
-        'values': {'title': title, 'pubdate': pubdate},
+        'values': {'articles': [{
+            'title': title,
+            'date': pubdate,
+            'content': html_content,
+            'url': output_path or name,
+        }]},
         'built_from': [{'owner': 'formatter', 'name': name}],
         'output_path': output_path or name,
     })
@@ -94,6 +99,29 @@ def test_rewrites_when_plan_is_newer_than_existing_output(skrapdb, tmp_path):
     WriteHtmlPlugin(skrapdb, {'output_dir': str(tmp_path)}).run()
 
     assert "New" in output_file.read_text()
+
+
+def test_single_article_template_warns_on_multiple_articles(skrapdb, tmp_path, caplog):
+    plan = skrapdb.find_or_create_skrap("plan", "foo.html", "plan-article-page")
+    plan.meta.update({
+        'template': 'single_article',
+        'values': {'articles': [
+            {'title': 'First', 'date': None, 'content': '<p>1</p>', 'url': 'foo.html'},
+            {'title': 'Second', 'date': None, 'content': '<p>2</p>', 'url': 'foo.html'},
+        ]},
+        'built_from': [],
+        'output_path': 'foo.html',
+    })
+    skrapdb.save_skrap(plan, owner="plan-article-page")
+
+    with caplog.at_level("WARNING"):
+        WriteHtmlPlugin(skrapdb, {'output_dir': str(tmp_path)}).run()
+
+    assert any("expects one article" in r.message for r in caplog.records)
+    # Uses only the first article, not both.
+    written = (tmp_path / "foo.html").read_text()
+    assert "First" in written
+    assert "Second" not in written
 
 
 def test_unknown_template_raises(skrapdb, tmp_path):

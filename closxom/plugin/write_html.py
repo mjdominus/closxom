@@ -8,9 +8,10 @@ from closxom.plugin.base import Plugin
 
 
 class WriteHtmlPlugin(Plugin):
-    """Executes each PlanSkrap: fills its named template with its values
-    and the content of the skraps listed in built_from, then writes the
-    result to output_path.
+    """Executes each PlanSkrap: fills its named template with its
+    values, then writes the result to output_path. built_from is not
+    consulted here - values already carries everything the template
+    needs, fully resolved by the planner.
 
     Overrides run() directly rather than using the base class's target/
     dependency machinery: staleness here means comparing a PlanSkrap's
@@ -84,13 +85,19 @@ class WriteHtmlPlugin(Plugin):
         raise ValueError(f"Plan {plan.name!r}: unknown template {template!r}")
 
     def render_single_article(self, plan):
-        values = plan.meta.get('values', {})
-        title = values.get('title', 'Untitled')
-        pubdate = values.get('pubdate')
+        articles = plan.meta.get('values', {}).get('articles', [{}])
+        if len(articles) > 1:
+            self.log.warning(
+                "Plan %r: template 'single_article' expects one article, got %d; "
+                "using the first", plan.name, len(articles))
+        article = articles[0]
+        title = article.get('title', '(no title)')
+        date = article.get('date')
+        content = article.get('content', '')
 
         date_html = ''
-        if pubdate:
-            dt = datetime.fromisoformat(pubdate)
+        if date:
+            dt = datetime.fromisoformat(date)
             date_html = f"<p class='date'>{dt.strftime('%B %d, %Y')}</p>"
 
         return f"""<!DOCTYPE html>
@@ -104,18 +111,8 @@ class WriteHtmlPlugin(Plugin):
         <h1>{escape_html(title)}</h1>
         {date_html}
         <div class='content'>
-{self.built_from_content(plan)}
+{content}
         </div>
     </article>
 </body>
 </html>"""
-
-    def built_from_content(self, plan):
-        """Concatenate the already-rendered content of every skrap
-        listed in built_from - never re-escaped, it's HTML already."""
-        parts = []
-        for ref in plan.meta.get('built_from', []):
-            skrap = self.db.find_skrap_by_name(ref['owner'], ref['name'])
-            if skrap is not None and skrap.content:
-                parts.append(skrap.content)
-        return '\n'.join(parts)

@@ -142,20 +142,27 @@ class HTMLSkrap(Skrap):
 
 @register_skrap_type
 class PlanSkrap(Skrap):
-    """Represents a plan for one output page: fill template with values
-    and the contents of the skraps listed in built_from. Named after its
-    output file, not any input file - a plan does not map one-to-one
-    with input files (an archive page aggregates many), so from here on
-    skraps are named for the output they pertain to. Has no content of
-    its own; write_html executes the plan.
+    """Represents a plan for one output page: fill template with
+    values. Named after its output file, not any input file - a plan
+    does not map one-to-one with input files (an archive page
+    aggregates many), so from here on skraps are named for the output
+    they pertain to. Has no content of its own; write_html executes
+    the plan.
 
     Metadata keys:
         template: which template to fill, e.g. "single_article"
-        values: dict of plain substitution values for the template
-        built_from: list of {owner, name} refs to skraps whose .content
-            gets inserted into the template - the uniform "what was I
-            built from" field (see notes/redesign-decisions.md and
-            `lt` yhhrg5), used to detect a vanished input later
+        values: dict of data for the template, e.g.
+            {'articles': [{'title', 'date', 'content', 'url', ...}, ...]}
+            - one element for a single-article page, many for an
+            archive. Each article's content is already fully resolved
+            here (not a reference to dereference later), so a
+            body-only change is visible in values itself and correctly
+            marks the plan changed.
+        built_from: list of {owner, name} refs to skraps this plan was
+            built from - the uniform "what was I built from" field
+            (see notes/redesign-decisions.md and `lt` yhhrg5), used
+            only to detect a vanished input later; not dereferenced by
+            write_html (values already carries what it needs)
         output_path: where to write the HTML file (same as name today,
             but kept explicit since name-equals-path is only a
             convention, not a rule)

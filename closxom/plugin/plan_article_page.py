@@ -53,8 +53,12 @@ class PlanArticlePagePlugin(Plugin):
         new_meta = {
             'template': 'single_article',
             'values': {
-                'title': article.meta.get('title', 'Untitled'),
-                'pubdate': publication.meta.get('pubdate') if publication else None,
+                'articles': [{
+                    'title': article.meta.get('title', 'Untitled'),
+                    'date': publication.meta.get('pubdate') if publication else None,
+                    'content': html.content or '',
+                    'url': target,
+                }],
             },
             'built_from': [{'owner': 'formatter', 'name': article.name}],
             'output_path': target,

@@ -27,7 +27,12 @@ def test_creates_plan_for_published_article(skrapdb):
     plan = _get_plan(skrapdb, "foo.html")
     assert plan is not None
     assert plan.meta['template'] == 'single_article'
-    assert plan.meta['values'] == {'title': 'Foo', 'pubdate': '2027-01-01T00:00:00+00:00'}
+    assert plan.meta['values'] == {'articles': [{
+        'title': 'Foo',
+        'date': '2027-01-01T00:00:00+00:00',
+        'content': '<p>body</p>\n',
+        'url': 'foo.html',
+    }]}
     assert plan.meta['built_from'] == [{'owner': 'formatter', 'name': 'foo.blog'}]
     assert plan.meta['output_path'] == 'foo.html'
 
@@ -93,4 +98,21 @@ def test_replans_when_title_changes(skrapdb):
 
     PlanArticlePagePlugin(skrapdb, {}).run()
 
-    assert _get_plan(skrapdb, "foo.html").meta['values']['title'] == "New Title"
+    article_values = _get_plan(skrapdb, "foo.html").meta['values']['articles'][0]
+    assert article_values['title'] == "New Title"
+
+
+def test_replans_when_html_content_changes(skrapdb):
+    _make_published(skrapdb, "foo.blog", html_content="<p>v1</p>\n")
+    PlanArticlePagePlugin(skrapdb, {}).run()
+    first = _get_plan(skrapdb, "foo.html").last_updated
+
+    html = skrapdb.find_skrap_by_name("formatter", "foo.blog")
+    html.content = "<p>v2</p>\n"
+    skrapdb.save_skrap(html, owner="formatter")
+
+    PlanArticlePagePlugin(skrapdb, {}).run()
+
+    plan = _get_plan(skrapdb, "foo.html")
+    assert plan.meta['values']['articles'][0]['content'] == "<p>v2</p>\n"
+    assert plan.last_updated != first
