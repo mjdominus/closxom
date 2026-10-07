@@ -78,10 +78,12 @@ class WriteHtmlPlugin(Plugin):
         return files_written
 
     def render(self, plan):
-        """Render a plan's template. Only 'single_article' exists so far."""
+        """Render a plan's template."""
         template = plan.meta.get('template')
         if template == 'single_article':
             return self.render_single_article(plan)
+        if template == 'archive':
+            return self.render_archive(plan)
         raise ValueError(f"Plan {plan.name!r}: unknown template {template!r}")
 
     def render_single_article(self, plan):
@@ -92,13 +94,6 @@ class WriteHtmlPlugin(Plugin):
                 "using the first", plan.name, len(articles))
         article = articles[0]
         title = article.get('title', '(no title)')
-        date = article.get('date')
-        content = article.get('content', '')
-
-        date_html = ''
-        if date:
-            dt = datetime.fromisoformat(date)
-            date_html = f"<p class='date'>{dt.strftime('%B %d, %Y')}</p>"
 
         return f"""<!DOCTYPE html>
 <html>
@@ -109,10 +104,47 @@ class WriteHtmlPlugin(Plugin):
 <body>
     <article>
         <h1>{escape_html(title)}</h1>
-        {date_html}
+        {self._date_html(article.get('date'))}
         <div class='content'>
-{content}
+{article.get('content', '')}
         </div>
     </article>
 </body>
 </html>"""
+
+    def render_archive(self, plan):
+        values = plan.meta.get('values', {})
+        title = values.get('title', 'Archive')
+
+        sections = []
+        for article in values.get('articles', []):
+            art_title = article.get('title', '(no title)')
+            url = article.get('url', '')
+            sections.append(f"""
+    <article>
+        <h2><a href="/{url}">{escape_html(art_title)}</a></h2>
+        {self._date_html(article.get('date'))}
+        <div class='content'>
+{article.get('content', '')}
+        </div>
+    </article>""")
+
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{escape_html(title)}</title>
+</head>
+<body>
+    <h1>{escape_html(title)}</h1>
+{''.join(sections)}
+</body>
+</html>"""
+
+    def _date_html(self, date):
+        """Render a stored ISO-8601 pubdate as a human-readable <p>, or
+        '' if there isn't one."""
+        if not date:
+            return ''
+        dt = datetime.fromisoformat(date)
+        return f"<p class='date'>{dt.strftime('%B %d, %Y')}</p>"

@@ -17,6 +17,7 @@ from closxom.plugin.process_meta import ProcessMetaPlugin
 from closxom.plugin.resolve_publication import ResolvePublicationPlugin
 from closxom.plugin.formatter import FormatterPlugin
 from closxom.plugin.plan_article_page import PlanArticlePagePlugin
+from closxom.plugin.plan_year_archive_page import PlanYearArchivePagePlugin
 from closxom.plugin.write_html import WriteHtmlPlugin
 
 PLUGINS = {
@@ -27,6 +28,7 @@ PLUGINS = {
         ResolvePublicationPlugin,
         FormatterPlugin,
         PlanArticlePagePlugin,
+        PlanYearArchivePagePlugin,
         WriteHtmlPlugin,
     ]
 }
